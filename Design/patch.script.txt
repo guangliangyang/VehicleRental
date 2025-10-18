@@ -1,0 +1,9 @@
+
+// 赋予 Stream Analytics Job 的托管身份写入权限
+.add database ['adx-db-vc'] ingestors ('aadapp=b74d1655-4f84-4dc6-b53f-fc0ed61b85ad;282eb06d-3a65-48c3-81c3-225d1e9a10f8')
+
+// 赋予监控（可查看元数据）的权限
+.add database ['adx-db-vc'] monitors ('aadapp=b74d1655-4f84-4dc6-b53f-fc0ed61b85ad;282eb06d-3a65-48c3-81c3-225d1e9a10f8')
+
+// 验证是否添加成功
+.show database ['adx-db-vc'] principals

@@ -1,0 +1,75 @@
+# Build outputs
+bin/
+obj/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# IDE folders
+.vs/
+.idea/
+
+# Logs and coverage
+*.log
+TestResults/
+*.coverage
+*.coveragexml
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.cache
+*.swp
+*.swo
+
+# Environment files with secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+secrets.env
+
+# Azure configuration files with secrets
+*.secrets.json
+appsettings.secrets.json
+azure-secrets.json
+
+# Kubernetes files with actual secrets (keep template versions)
+k8s/*-secret-filled.yaml
+k8s/secrets/
+*.secret.yaml
+
+# Azure CLI cached credentials
+.azure/
+
+# Docker environment files
+docker-compose.override.yml
+.dockerenv
+
+# Certificate files
+*.pfx
+*.p12
+*.pem
+*.key
+*.crt
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Terraform state files (if using Infrastructure as Code)
+*.tfstate
+*.tfstate.backup
+.terraform/
+
+# Packages
+*.nupkg

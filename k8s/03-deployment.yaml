@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fleetservice-api
+  namespace: default
+  labels:
+    app: fleetservice-api
+    version: v1
+spec:
+  replicas: 1  # Cost optimization: single replica for dev/test environment
+  selector:
+    matchLabels:
+      app: fleetservice-api
+  template:
+    metadata:
+      labels:
+        app: fleetservice-api
+        version: v1
+    spec:
+      imagePullSecrets:
+      - name: acr-secret
+      containers:
+      - name: fleetservice-api
+        image: vehiclerentalacr.azurecr.io/fleetservice-api:latest
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        env:
+        # Environment variables from ConfigMap
+        - name: ASPNETCORE_ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: fleetservice-config
+              key: ASPNETCORE_ENVIRONMENT
+        - name: ASPNETCORE_URLS
+          valueFrom:
+            configMapKeyRef:
+              name: fleetservice-config
+              key: ASPNETCORE_URLS
+        - name: COSMOS_DATABASE_ID
+          valueFrom:
+            configMapKeyRef:
+              name: fleetservice-config
+              key: COSMOS_DATABASE_ID
+        - name: COSMOS_CONTAINER_ID
+          valueFrom:
+            configMapKeyRef:
+              name: fleetservice-config
+              key: COSMOS_CONTAINER_ID
+        - name: SIGNALR_HUB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: fleetservice-config
+              key: SIGNALR_HUB_NAME
+        # Sensitive environment variables from Secret
+        - name: COSMOS_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: fleetservice-secret
+              key: COSMOS_ENDPOINT
+        - name: COSMOS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: fleetservice-secret
+              key: COSMOS_KEY
+        - name: SIGNALR_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: fleetservice-secret
+              key: SIGNALR_CONNECTION_STRING
+        # Resource limits and requests (Cost-optimized for smaller VM)
+        resources:
+          requests:
+            memory: "128Mi"  # Reduced from 256Mi
+            cpu: "100m"      # Reduced from 250m
+          limits:
+            memory: "256Mi"  # Reduced from 512Mi
+            cpu: "250m"      # Reduced from 500m
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        # Security context
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+      # Pod security context
+      securityContext:
+        fsGroup: 2000
+      # Restart policy
+      restartPolicy: Always

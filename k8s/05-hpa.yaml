@@ -1,0 +1,39 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: fleetservice-api-hpa
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: fleetservice-api
+  minReplicas: 1  # Cost optimization: single replica minimum
+  maxReplicas: 5  # LoadBalancer can handle more traffic than NodePort
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 600  # Wait longer before scaling down
+      policies:
+      - type: Percent
+        value: 50  # Scale down more aggressively to save cost
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 30  # Wait before scaling up
+      policies:
+      - type: Pods
+        value: 1  # Scale up only 1 pod at a time
+        periodSeconds: 60
+      selectPolicy: Min  # Use conservative scaling policy

@@ -1,0 +1,31 @@
+<policies>
+    <inbound>
+        <cors allow-credentials="true">
+            <allowed-origins>
+                <origin>http://localhost:3000</origin>
+                <origin>https://*.azurewebsites.net</origin>
+                <origin>https://*.azure.com</origin>
+            </allowed-origins>
+            <allowed-methods>
+                <method>GET</method>
+                <method>POST</method>
+                <method>PUT</method>
+                <method>DELETE</method>
+                <method>OPTIONS</method>
+            </allowed-methods>
+            <allowed-headers>
+                <header>*</header>
+            </allowed-headers>
+        </cors>
+        <base />
+    </inbound>
+    <backend>
+        <base />
+    </backend>
+    <outbound>
+        <base />
+    </outbound>
+    <on-error>
+        <base />
+    </on-error>
+</policies>

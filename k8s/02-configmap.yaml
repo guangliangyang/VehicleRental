@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fleetservice-config
+  namespace: default
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ASPNETCORE_URLS: "http://+:8080"
+  COSMOS_DATABASE_ID: "fleet"
+  COSMOS_CONTAINER_ID: "Vehicles"
+  SIGNALR_HUB_NAME: "vehicles"
+  # Logging configuration
+  Logging__LogLevel__Default: "Information"
+  Logging__LogLevel__Microsoft.AspNetCore: "Warning"
