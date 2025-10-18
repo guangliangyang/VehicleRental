@@ -166,16 +166,10 @@ jobs:
           terraform import azurerm_container_registry.main "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.AZURE_RESOURCE_GROUP }}/providers/Microsoft.ContainerRegistry/registries/${{ env.REGISTRY_NAME }}" || true
         fi
 
-        # Import App Service Plan if exists
-        if az appservice plan show --name "plan-vehicle-rental-dev" --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" >/dev/null 2>&1; then
-          echo "App Service Plan exists, importing..."
-          terraform import azurerm_service_plan.main "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.AZURE_RESOURCE_GROUP }}/providers/Microsoft.Web/serverfarms/plan-vehicle-rental-dev" || true
-        fi
-
-        # Import App Service if exists
-        if az webapp show --name "app-vehicle-rental-api-dev" --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" >/dev/null 2>&1; then
-          echo "App Service exists, importing..."
-          terraform import azurerm_linux_web_app.api "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.AZURE_RESOURCE_GROUP }}/providers/Microsoft.Web/sites/app-vehicle-rental-api-dev" || true
+        # Import Container Instance if exists
+        if az container show --name "ci-vehicle-rental-api-dev" --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" >/dev/null 2>&1; then
+          echo "Container Instance exists, importing..."
+          terraform import azurerm_container_group.api "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.AZURE_RESOURCE_GROUP }}/providers/Microsoft.ContainerInstance/containerGroups/ci-vehicle-rental-api-dev" || true
         fi
 
         # Import Static Web App if exists
@@ -245,12 +239,15 @@ jobs:
         docker build -t ${{ env.REGISTRY_NAME }}.azurecr.io/fleet-api:${{ github.sha }} -f Dockerfile .
         docker push ${{ env.REGISTRY_NAME }}.azurecr.io/fleet-api:${{ github.sha }}
 
-    # Deploy to Azure App Service
-    - name: Deploy to Azure App Service
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: app-vehicle-rental-api-dev
-        images: ${{ env.REGISTRY_NAME }}.azurecr.io/fleet-api:${{ github.sha }}
+    # Deploy to Azure Container Instance
+    - name: Deploy to Azure Container Instance
+      run: |
+        # Update container instance with new image
+        az container restart --name ci-vehicle-rental-api-dev --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
+
+        # Wait for container to be ready
+        echo "Waiting for container to be ready..."
+        sleep 30
 
     # Deploy frontend to Static Web App
     - name: Deploy to Azure Static Web Apps

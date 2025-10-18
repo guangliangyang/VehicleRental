@@ -75,12 +75,12 @@ The CI/CD pipeline **automatically** creates and manages Terraform remote state:
 - **Initializes** Terraform with remote state
 - **Plans** infrastructure changes
 - **Applies** only necessary updates
-- **Creates**: Resource Group, Container Registry, App Service, Static Web App, Application Insights
+- **Creates**: Resource Group, Container Registry, Container Instance, Static Web App, Application Insights
 
 ### 🚀 Deploy
 - Downloads build artifacts
 - Builds and pushes Docker image to ACR
-- Deploys API to Azure App Service (F1 Free tier)
+- Deploys API to Azure Container Instance
 - Deploys frontend to Static Web App
 
 ### ✅ **Key Benefits:**
@@ -95,8 +95,7 @@ The CI/CD pipeline **automatically** creates and manages Terraform remote state:
 |----------|------|---------|
 | Resource Group | `rg-vehicle-rental-dev` | Container for all resources |
 | Container Registry | `crvehiclerentaldev` | Docker image storage |
-| App Service Plan | `plan-vehicle-rental-dev` | Hosting plan (B1 SKU) |
-| App Service | `app-vehicle-rental-api-dev` | .NET API hosting |
+| Container Instance | `ci-vehicle-rental-api-dev` | .NET API hosting |
 | Static Web App | `swa-vehicle-rental-dev` | React frontend hosting |
 | Application Insights | `appi-vehicle-rental-dev` | Monitoring & analytics |
 
@@ -104,9 +103,9 @@ The CI/CD pipeline **automatically** creates and manages Terraform remote state:
 
 After successful deployment:
 
-- **API**: `https://app-vehicle-rental-api-dev.azurewebsites.net`
+- **API**: `http://vehicle-rental-api-dev.eastus.azurecontainer.io`
 - **Frontend**: `https://{random}.1.azurestaticapps.net`
-- **Swagger**: `https://app-vehicle-rental-api-dev.azurewebsites.net/swagger`
+- **Swagger**: `http://vehicle-rental-api-dev.eastus.azurecontainer.io/swagger`
 
 ## Troubleshooting
 
@@ -130,13 +129,13 @@ az group delete --name rg-vehicle-rental-dev --yes --no-wait
 
 ## Cost Estimation
 
-Monthly cost (~$5 USD):
-- App Service F1 (Free): $0
+Monthly cost (~$7-10 USD):
+- Container Instance (0.5 CPU, 1.5GB): ~$7-10
 - Container Registry Basic: ~$5
 - Static Web App Free: $0
 - Application Insights: ~$2-5 (based on usage)
 
-**Note**: F1 tier has limitations (60 CPU minutes/day, 1GB storage) but is perfect for learning and development.
+**Note**: Container Instances are charged per second of usage, making them cost-effective for development and testing.
 
 ## Next Steps
 

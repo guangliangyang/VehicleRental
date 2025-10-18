@@ -9,8 +9,8 @@ output "container_registry_url" {
 }
 
 output "api_app_url" {
-  description = "URL of the API app service"
-  value       = "https://${azurerm_linux_web_app.api.default_hostname}"
+  description = "URL of the API container instance"
+  value       = "http://${azurerm_container_group.api.fqdn}"
 }
 
 output "frontend_url" {

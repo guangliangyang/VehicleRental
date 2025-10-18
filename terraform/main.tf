@@ -53,39 +53,42 @@ resource "azurerm_container_registry" "main" {
   }
 }
 
-# App Service Plan
-resource "azurerm_service_plan" "main" {
-  name                = "plan-vehicle-rental-dev"
-  resource_group_name = azurerm_resource_group.main.name
+# Container Instance for API
+resource "azurerm_container_group" "api" {
+  name                = "ci-vehicle-rental-api-dev"
   location            = azurerm_resource_group.main.location
-  os_type             = "Linux"
-  sku_name            = "F1"
-
-  tags = {
-    Environment = "Development"
-    Project     = "VehicleRental"
-  }
-}
-
-# App Service for API
-resource "azurerm_linux_web_app" "api" {
-  name                = "app-vehicle-rental-api-dev"
   resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_service_plan.main.location
-  service_plan_id     = azurerm_service_plan.main.id
+  ip_address_type     = "Public"
+  dns_name_label      = "vehicle-rental-api-dev"
+  os_type             = "Linux"
 
-  site_config {
-    application_stack {
-      docker_image_name   = "fleet-api:latest"
-      docker_registry_url = "https://${azurerm_container_registry.main.login_server}"
+  container {
+    name   = "fleet-api"
+    image  = "${azurerm_container_registry.main.login_server}/fleet-api:latest"
+    cpu    = "0.5"
+    memory = "1.5"
+
+    ports {
+      port     = 80
+      protocol = "TCP"
+    }
+
+    environment_variables = {
+      ASPNETCORE_ENVIRONMENT = "Production"
+      ASPNETCORE_URLS       = "http://+:80"
+    }
+
+    secure_environment_variables = {
+      DOCKER_REGISTRY_SERVER_URL      = "https://${azurerm_container_registry.main.login_server}"
+      DOCKER_REGISTRY_SERVER_USERNAME = azurerm_container_registry.main.admin_username
+      DOCKER_REGISTRY_SERVER_PASSWORD = azurerm_container_registry.main.admin_password
     }
   }
 
-  app_settings = {
-    DOCKER_REGISTRY_SERVER_URL          = "https://${azurerm_container_registry.main.login_server}"
-    DOCKER_REGISTRY_SERVER_USERNAME     = azurerm_container_registry.main.admin_username
-    DOCKER_REGISTRY_SERVER_PASSWORD     = azurerm_container_registry.main.admin_password
-    WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
+  image_registry_credential {
+    server   = azurerm_container_registry.main.login_server
+    username = azurerm_container_registry.main.admin_username
+    password = azurerm_container_registry.main.admin_password
   }
 
   tags = {
