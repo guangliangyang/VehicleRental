@@ -24,6 +24,6 @@ public class ResultTests
         Assert.False(result.IsSuccess);
         Assert.True(result.IsFailure);
         Assert.Equal(error, result.Error);
-        Assert.Null(result.Value);
+        Assert.Equal(default(int), result.Value);
     }
 }
