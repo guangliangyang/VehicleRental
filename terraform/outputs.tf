@@ -5,7 +5,7 @@ output "resource_group_name" {
 
 output "container_registry_url" {
   description = "URL of the container registry"
-  value       = data.azurerm_container_registry.main.login_server
+  value       = azurerm_container_registry.main.login_server
 }
 
 output "api_app_url" {
@@ -15,17 +15,17 @@ output "api_app_url" {
 
 output "frontend_url" {
   description = "URL of the static web app"
-  value       = "https://${data.azurerm_static_web_app.frontend.default_host_name}"
+  value       = "https://${azurerm_static_web_app.frontend.default_host_name}"
 }
 
 output "static_web_app_api_token" {
   description = "API token for Static Web App deployment"
-  value       = data.azurerm_static_web_app.frontend.api_key
+  value       = azurerm_static_web_app.frontend.api_key
   sensitive   = true
 }
 
 output "application_insights_key" {
   description = "Application Insights instrumentation key"
-  value       = data.azurerm_application_insights.main.instrumentation_key
+  value       = azurerm_application_insights.main.instrumentation_key
   sensitive   = true
 }
