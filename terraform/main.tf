@@ -207,6 +207,17 @@ resource "azurerm_container_app" "api" {
   ingress {
     external_enabled = true
     target_port      = 8080
+
+    cors_policy {
+      allowed_origins = [
+        "https://${azurerm_static_web_app.frontend.default_host_name}",
+        "http://localhost:3000"  # For local development
+      ]
+      allowed_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+      allowed_headers = ["*"]
+      max_age_in_seconds = 300
+    }
+
     traffic_weight {
       percentage = 100
       latest_revision = true
