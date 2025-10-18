@@ -1,7 +1,10 @@
 using FleetService.Api.Extensions;
 
-// Load environment variables from .env file
-DotNetEnv.Env.Load();
+// Load environment variables from .env file (optional for container environments)
+if (File.Exists(".env"))
+{
+    DotNetEnv.Env.Load();
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
