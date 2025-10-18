@@ -41,7 +41,7 @@ AZURE_TENANT_ID = {tenantId from JSON}
 AZURE_STATIC_WEB_APPS_API_TOKEN = {will be generated after Static Web App creation}
 ```
 
-**Note**: The Terraform configuration now uses proper Service Principal authentication instead of Azure CLI authentication for CI/CD compatibility.
+**Note**: The Terraform configuration now uses proper Service Principal authentication instead of Azure CLI authentication for CI/CD compatibility. Both the provider and backend (remote state) use ARM environment variables for authentication.
 
 ### 3. Initialize Terraform State (Optional)
 
