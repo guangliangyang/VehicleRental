@@ -108,6 +108,14 @@ jobs:
           --account-name stterraformvehicle \
           --output none || true
 
+    # Register Azure resource providers
+    - name: Register Azure Resource Providers
+      run: |
+        echo "Registering required Azure resource providers..."
+        az provider register --namespace Microsoft.App --wait
+        az provider register --namespace Microsoft.OperationalInsights --wait
+        echo "Resource providers registered successfully"
+
     # Terraform Init
     - name: Terraform Init
       run: terraform init
