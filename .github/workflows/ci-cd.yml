@@ -97,6 +97,10 @@ jobs:
         TF_VAR_resource_group_name: ${{ env.AZURE_RESOURCE_GROUP }}
         TF_VAR_location: ${{ env.AZURE_LOCATION }}
         TF_VAR_registry_name: ${{ env.REGISTRY_NAME }}
+        TF_VAR_client_id: ${{ secrets.AZURE_CLIENT_ID }}
+        TF_VAR_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+        TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
+        TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     # Terraform Apply
     - name: Terraform Apply
@@ -106,6 +110,10 @@ jobs:
         TF_VAR_resource_group_name: ${{ env.AZURE_RESOURCE_GROUP }}
         TF_VAR_location: ${{ env.AZURE_LOCATION }}
         TF_VAR_registry_name: ${{ env.REGISTRY_NAME }}
+        TF_VAR_client_id: ${{ secrets.AZURE_CLIENT_ID }}
+        TF_VAR_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+        TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
+        TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   deploy:
     needs: [build-and-test, infrastructure]
