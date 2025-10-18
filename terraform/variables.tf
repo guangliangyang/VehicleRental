@@ -40,3 +40,28 @@ variable "subscription_id" {
   type        = string
   sensitive   = true
 }
+
+# Cosmos DB configuration variables
+variable "cosmos_endpoint" {
+  description = "Cosmos DB endpoint URL"
+  type        = string
+  sensitive   = true
+}
+
+variable "cosmos_key" {
+  description = "Cosmos DB primary key"
+  type        = string
+  sensitive   = true
+}
+
+variable "cosmos_database_id" {
+  description = "Cosmos DB database ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "cosmos_container_id" {
+  description = "Cosmos DB container ID"
+  type        = string
+  sensitive   = true
+}

@@ -141,21 +141,21 @@ resource "azurerm_container_group" "api" {
     commands = ["tail", "-f", "/dev/null"]
 
     ports {
-      port     = 80
+      port     = 8080
       protocol = "TCP"
     }
 
     environment_variables = {
       ASPNETCORE_ENVIRONMENT = "Production"
-      ASPNETCORE_URLS       = "http://+:80"
+      ASPNETCORE_URLS       = "http://+:8080"
     }
 
     secure_environment_variables = {
-      # Cosmos DB configuration from Key Vault
-      COSMOS_ENDPOINT     = "@Microsoft.KeyVault(VaultName=kv-vehicle-rental-dev;SecretName=cosmos-endpoint)"
-      COSMOS_KEY          = "@Microsoft.KeyVault(VaultName=kv-vehicle-rental-dev;SecretName=cosmos-key)"
-      COSMOS_DATABASE_ID  = "@Microsoft.KeyVault(VaultName=kv-vehicle-rental-dev;SecretName=cosmos-database-id)"
-      COSMOS_CONTAINER_ID = "@Microsoft.KeyVault(VaultName=kv-vehicle-rental-dev;SecretName=cosmos-container-id)"
+      # Cosmos DB configuration from variables (passed via GitHub Secrets)
+      COSMOS_ENDPOINT     = var.cosmos_endpoint
+      COSMOS_KEY          = var.cosmos_key
+      COSMOS_DATABASE_ID  = var.cosmos_database_id
+      COSMOS_CONTAINER_ID = var.cosmos_container_id
       # Docker registry credentials
       DOCKER_REGISTRY_SERVER_URL      = "https://${azurerm_container_registry.main.login_server}"
       DOCKER_REGISTRY_SERVER_USERNAME = azurerm_container_registry.main.admin_username

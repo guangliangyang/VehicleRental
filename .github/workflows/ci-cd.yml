@@ -134,6 +134,10 @@ jobs:
         TF_VAR_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
         TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
         TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        TF_VAR_cosmos_endpoint: ${{ secrets.COSMOS_ENDPOINT }}
+        TF_VAR_cosmos_key: ${{ secrets.COSMOS_KEY }}
+        TF_VAR_cosmos_database_id: ${{ secrets.COSMOS_DATABASE_ID }}
+        TF_VAR_cosmos_container_id: ${{ secrets.COSMOS_CONTAINER_ID }}
 
     # Intelligent Resource Import (for idempotent execution)
     - name: Import Existing Base Resources
@@ -150,6 +154,10 @@ jobs:
         export TF_VAR_client_secret=${{ secrets.AZURE_CLIENT_SECRET }}
         export TF_VAR_tenant_id=${{ secrets.AZURE_TENANT_ID }}
         export TF_VAR_subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        export TF_VAR_cosmos_endpoint="${{ secrets.COSMOS_ENDPOINT }}"
+        export TF_VAR_cosmos_key="${{ secrets.COSMOS_KEY }}"
+        export TF_VAR_cosmos_database_id="${{ secrets.COSMOS_DATABASE_ID }}"
+        export TF_VAR_cosmos_container_id="${{ secrets.COSMOS_CONTAINER_ID }}"
 
         # Check and import existing base resources
         echo "Checking for existing base resources..."
@@ -210,6 +218,10 @@ jobs:
         TF_VAR_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
         TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
         TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        TF_VAR_cosmos_endpoint: ${{ secrets.COSMOS_ENDPOINT }}
+        TF_VAR_cosmos_key: ${{ secrets.COSMOS_KEY }}
+        TF_VAR_cosmos_database_id: ${{ secrets.COSMOS_DATABASE_ID }}
+        TF_VAR_cosmos_container_id: ${{ secrets.COSMOS_CONTAINER_ID }}
 
   build-and-push-image:
     needs: infrastructure-base
@@ -287,6 +299,10 @@ jobs:
         TF_VAR_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
         TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
         TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        TF_VAR_cosmos_endpoint: ${{ secrets.COSMOS_ENDPOINT }}
+        TF_VAR_cosmos_key: ${{ secrets.COSMOS_KEY }}
+        TF_VAR_cosmos_database_id: ${{ secrets.COSMOS_DATABASE_ID }}
+        TF_VAR_cosmos_container_id: ${{ secrets.COSMOS_CONTAINER_ID }}
 
     # Import Container Instance if exists
     - name: Import Container Instance
@@ -303,6 +319,10 @@ jobs:
         export TF_VAR_client_secret=${{ secrets.AZURE_CLIENT_SECRET }}
         export TF_VAR_tenant_id=${{ secrets.AZURE_TENANT_ID }}
         export TF_VAR_subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        export TF_VAR_cosmos_endpoint="${{ secrets.COSMOS_ENDPOINT }}"
+        export TF_VAR_cosmos_key="${{ secrets.COSMOS_KEY }}"
+        export TF_VAR_cosmos_database_id="${{ secrets.COSMOS_DATABASE_ID }}"
+        export TF_VAR_cosmos_container_id="${{ secrets.COSMOS_CONTAINER_ID }}"
 
         # Import Container Instance if exists
         if az container show --name "ci-vehicle-rental-api-dev" --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" >/dev/null 2>&1; then
@@ -327,6 +347,10 @@ jobs:
         TF_VAR_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
         TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
         TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        TF_VAR_cosmos_endpoint: ${{ secrets.COSMOS_ENDPOINT }}
+        TF_VAR_cosmos_key: ${{ secrets.COSMOS_KEY }}
+        TF_VAR_cosmos_database_id: ${{ secrets.COSMOS_DATABASE_ID }}
+        TF_VAR_cosmos_container_id: ${{ secrets.COSMOS_CONTAINER_ID }}
 
   deploy-frontend:
     needs: [build-and-test, infrastructure-base]
