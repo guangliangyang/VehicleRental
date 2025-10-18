@@ -98,18 +98,13 @@ resource "azurerm_application_insights" "main" {
 
 # Key Vault for secure configuration storage
 resource "azurerm_key_vault" "main" {
-  name                = "kv-vehicle-rental-dev"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
-  tenant_id           = var.tenant_id
-  sku_name            = "standard"
-
-  # Service Principal access policy for CI/CD
-  access_policy {
-    tenant_id = var.tenant_id
-    object_id = var.client_id
-    secret_permissions = ["Get", "List"]
-  }
+  name                            = "kv-vehicle-rental-dev"
+  resource_group_name             = azurerm_resource_group.main.name
+  location                        = azurerm_resource_group.main.location
+  tenant_id                       = var.tenant_id
+  sku_name                        = "standard"
+  enabled_for_deployment          = true
+  enabled_for_template_deployment = true
 
   tags = {
     Environment = "Development"
@@ -162,61 +157,23 @@ resource "azurerm_container_app" "api" {
         value = "http://+:8080"
       }
 
-      env {
-        name        = "COSMOS_ENDPOINT"
-        secret_name = "cosmos-endpoint"
-      }
-
-      env {
-        name        = "COSMOS_KEY"
-        secret_name = "cosmos-key"
-      }
-
-      env {
-        name        = "COSMOS_DATABASE_ID"
-        secret_name = "cosmos-database-id"
-      }
-
-      env {
-        name        = "COSMOS_CONTAINER_ID"
-        secret_name = "cosmos-container-id"
-      }
     }
   }
 
-  secret {
-    name  = "cosmos-endpoint"
-    value = var.cosmos_endpoint
-  }
-
-  secret {
-    name  = "cosmos-key"
-    value = var.cosmos_key
-  }
-
-  secret {
-    name  = "cosmos-database-id"
-    value = var.cosmos_database_id
-  }
-
-  secret {
-    name  = "cosmos-container-id"
-    value = var.cosmos_container_id
-  }
 
   ingress {
     external_enabled = true
     target_port      = 8080
 
     traffic_weight {
-      percentage = 100
+      percentage      = 100
       latest_revision = true
     }
   }
 
   registry {
-    server   = azurerm_container_registry.main.login_server
-    username = azurerm_container_registry.main.admin_username
+    server               = azurerm_container_registry.main.login_server
+    username             = azurerm_container_registry.main.admin_username
     password_secret_name = "registry-password"
   }
 
@@ -229,6 +186,48 @@ resource "azurerm_container_app" "api" {
     Environment = "Development"
     Project     = "VehicleRental"
   }
+}
+
+# Key Vault secrets for Cosmos DB
+resource "azurerm_key_vault_secret" "cosmos_endpoint" {
+  name         = "cosmos-endpoint"
+  value        = var.cosmos_endpoint
+  key_vault_id = azurerm_key_vault.main.id
+
+  depends_on = [azurerm_key_vault_access_policy.terraform_sp]
+}
+
+resource "azurerm_key_vault_secret" "cosmos_key" {
+  name         = "cosmos-key"
+  value        = var.cosmos_key
+  key_vault_id = azurerm_key_vault.main.id
+
+  depends_on = [azurerm_key_vault_access_policy.terraform_sp]
+}
+
+resource "azurerm_key_vault_secret" "cosmos_database_id" {
+  name         = "cosmos-database-id"
+  value        = var.cosmos_database_id
+  key_vault_id = azurerm_key_vault.main.id
+
+  depends_on = [azurerm_key_vault_access_policy.terraform_sp]
+}
+
+resource "azurerm_key_vault_secret" "cosmos_container_id" {
+  name         = "cosmos-container-id"
+  value        = var.cosmos_container_id
+  key_vault_id = azurerm_key_vault.main.id
+
+  depends_on = [azurerm_key_vault_access_policy.terraform_sp]
+}
+
+# Access policy for Terraform service principal to manage secrets
+resource "azurerm_key_vault_access_policy" "terraform_sp" {
+  key_vault_id = azurerm_key_vault.main.id
+  tenant_id    = var.tenant_id
+  object_id    = var.client_id
+
+  secret_permissions = ["Get", "List", "Set", "Delete", "Recover", "Backup", "Restore"]
 }
 
 # Key Vault access policy for Container App system identity

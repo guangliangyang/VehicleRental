@@ -5,6 +5,7 @@ using FleetService.Domain;
 using FleetService.Domain.Events;
 using FleetService.Infrastructure.Events;
 using FleetService.Infrastructure.Repositories;
+using FleetService.Infrastructure.Services;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Options;
 
@@ -40,34 +41,34 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Configures Cosmos DB services and repository
+    /// Configures Cosmos DB services and repository using Key Vault
     /// </summary>
     public static IServiceCollection AddCosmosServices(this IServiceCollection services, IConfiguration configuration)
     {
-        // Configure Cosmos options from environment variables
+        // Configure Cosmos options from configuration (Key Vault URL)
         services.Configure<CosmosOptions>(options =>
         {
-            options.Endpoint = Environment.GetEnvironmentVariable("COSMOS_ENDPOINT") ?? "";
-            options.Key = Environment.GetEnvironmentVariable("COSMOS_KEY") ?? "";
-            options.DatabaseId = Environment.GetEnvironmentVariable("COSMOS_DATABASE_ID") ?? "fleet";
-            options.ContainerId = Environment.GetEnvironmentVariable("COSMOS_CONTAINER_ID") ?? "Vehicles";
+            options.KeyVaultUrl = configuration["Cosmos:KeyVaultUrl"] ?? throw new InvalidOperationException("Cosmos:KeyVaultUrl configuration is required");
         });
 
+        // Register Key Vault service
+        services.AddSingleton<IKeyVaultService>(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<CosmosOptions>>().Value;
+            var logger = sp.GetRequiredService<ILogger<KeyVaultService>>();
+            return new KeyVaultService(options.KeyVaultUrl, logger);
+        });
+
+        // Register Cosmos repository factory
         services.AddSingleton<IVehicleRepository>(sp =>
         {
             var dispatcher = sp.GetRequiredService<IDomainEventDispatcher>();
-            var options = sp.GetRequiredService<IOptions<CosmosOptions>>().Value;
-
-            if (string.IsNullOrWhiteSpace(options.Endpoint) || string.IsNullOrWhiteSpace(options.Key))
-            {
-                throw new InvalidOperationException("Cosmos DB configuration is required. Please set COSMOS_ENDPOINT and COSMOS_KEY environment variables");
-            }
-
-            var cosmosClient = new CosmosClient(options.Endpoint, options.Key);
+            var keyVaultService = sp.GetRequiredService<IKeyVaultService>();
             var logger = sp.GetRequiredService<ILogger<CosmosVehicleRepository>>();
-            return new CosmosVehicleRepository(cosmosClient, sp.GetRequiredService<IOptions<CosmosOptions>>(), dispatcher, logger);
-        });
 
+            // Create a lazy-initialized repository that loads secrets on first access
+            return new LazyCosmosVehicleRepository(keyVaultService, dispatcher, logger);
+        });
 
         return services;
     }
