@@ -5,7 +5,13 @@ terraform {
       version = "~>3.0"
     }
   }
-  # No backend configuration - uses local state for simplicity
+
+  backend "azurerm" {
+    resource_group_name  = "rg-terraform-state"
+    storage_account_name = "stterraformvehicle"
+    container_name       = "tfstate"
+    key                  = "vehicle-rental.tfstate"
+  }
 }
 
 provider "azurerm" {
@@ -31,12 +37,6 @@ resource "azurerm_resource_group" "main" {
     Environment = "Development"
     Project     = "VehicleRental"
   }
-}
-
-# Import existing Container Registry if it exists
-import {
-  to = azurerm_container_registry.main
-  id = "/subscriptions/f9e8a1cc-119c-4044-96ed-4bd16955be51/resourceGroups/rg-vehicle-rental-dev/providers/Microsoft.ContainerRegistry/registries/crvehiclerentaldev"
 }
 
 # Container Registry
@@ -94,12 +94,6 @@ resource "azurerm_linux_web_app" "api" {
   }
 }
 
-# Import existing Static Web App if it exists
-import {
-  to = azurerm_static_web_app.frontend
-  id = "/subscriptions/f9e8a1cc-119c-4044-96ed-4bd16955be51/resourceGroups/rg-vehicle-rental-dev/providers/Microsoft.Web/staticSites/swa-vehicle-rental-dev"
-}
-
 # Static Web App for Frontend
 resource "azurerm_static_web_app" "frontend" {
   name                = "swa-vehicle-rental-dev"
@@ -112,12 +106,6 @@ resource "azurerm_static_web_app" "frontend" {
     Environment = "Development"
     Project     = "VehicleRental"
   }
-}
-
-# Import existing Application Insights if it exists
-import {
-  to = azurerm_application_insights.main
-  id = "/subscriptions/f9e8a1cc-119c-4044-96ed-4bd16955be51/resourceGroups/rg-vehicle-rental-dev/providers/Microsoft.Insights/components/appi-vehicle-rental-dev"
 }
 
 # Application Insights for monitoring

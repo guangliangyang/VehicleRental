@@ -88,6 +88,26 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+    # Create Terraform Backend Storage (idempotent)
+    - name: Create Terraform Backend Storage
+      run: |
+        # Create resource group for terraform state (if not exists)
+        az group create --name rg-terraform-state --location eastus --output none || true
+
+        # Create storage account for terraform state (if not exists)
+        az storage account create \
+          --name stterraformvehicle \
+          --resource-group rg-terraform-state \
+          --location eastus \
+          --sku Standard_LRS \
+          --output none || true
+
+        # Create container for terraform state (if not exists)
+        az storage container create \
+          --name tfstate \
+          --account-name stterraformvehicle \
+          --output none || true
+
     # Terraform Init
     - name: Terraform Init
       run: terraform init

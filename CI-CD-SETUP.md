@@ -43,25 +43,16 @@ AZURE_STATIC_WEB_APPS_API_TOKEN = {will be generated after Static Web App creati
 
 **Note**: The Terraform configuration now uses proper Service Principal authentication instead of Azure CLI authentication for CI/CD compatibility. Both the provider and backend (remote state) use ARM environment variables for authentication.
 
-### 3. Initialize Terraform State (Optional)
+### 3. Remote State Management (Automatic)
 
-For production, consider using remote state:
+The CI/CD pipeline **automatically** creates and manages Terraform remote state:
 
-```bash
-# Create storage account for Terraform state
-az group create --name rg-terraform-state --location eastus
-az storage account create --name stterraformstatevc --resource-group rg-terraform-state
+- ✅ **Auto-creates** Backend Storage Account (`stterraformvehicle`)
+- ✅ **Stores state** in Azure Storage for persistence
+- ✅ **Enables state locking** to prevent conflicts
+- ✅ **Fully idempotent** - safe to run multiple times
 
-# Update terraform/main.tf with backend configuration
-terraform {
-  backend "azurerm" {
-    resource_group_name  = "rg-terraform-state"
-    storage_account_name = "stterraformstatevc"
-    container_name       = "tfstate"
-    key                  = "vehicle-rental.tfstate"
-  }
-}
-```
+**No manual setup required** - the pipeline handles everything!
 
 ### 4. Test the Pipeline
 
@@ -73,22 +64,30 @@ terraform {
 
 ### 🔨 Build & Test
 - Restores .NET dependencies
-- Builds solution
+- Builds solution in Release mode
 - Runs 42 unit tests
 - Builds React frontend
-- Uploads artifacts
+- Publishes deployment artifacts
 
-### 🏗️ Infrastructure
-- Authenticates to Azure
-- Runs `terraform plan`
-- Applies infrastructure changes
-- Creates: Resource Group, Container Registry, App Service, Static Web App
+### 🏗️ Infrastructure (Fully Automated & Idempotent)
+- **Auto-creates** Terraform backend storage
+- **Authenticates** to Azure with Service Principal
+- **Initializes** Terraform with remote state
+- **Plans** infrastructure changes
+- **Applies** only necessary updates
+- **Creates**: Resource Group, Container Registry, App Service, Static Web App, Application Insights
 
 ### 🚀 Deploy
 - Downloads build artifacts
-- Builds and pushes Docker image
-- Deploys API to Azure App Service
+- Builds and pushes Docker image to ACR
+- Deploys API to Azure App Service (F1 Free tier)
 - Deploys frontend to Static Web App
+
+### ✅ **Key Benefits:**
+- **100% Idempotent**: Safe to run multiple times
+- **Zero Manual Steps**: Fully automated
+- **State Persistence**: Remote state ensures consistency
+- **Cost Optimized**: Uses free/low-cost tiers
 
 ## Resources Created
 
