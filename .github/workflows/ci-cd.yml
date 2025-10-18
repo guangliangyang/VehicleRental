@@ -135,6 +135,65 @@ jobs:
         TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
         TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+    # Intelligent Resource Import (for idempotent execution)
+    - name: Import Existing Resources
+      run: |
+        # Set environment variables for terraform commands
+        export ARM_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}
+        export ARM_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }}
+        export ARM_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}
+        export ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        export TF_VAR_resource_group_name=${{ env.AZURE_RESOURCE_GROUP }}
+        export TF_VAR_location=${{ env.AZURE_LOCATION }}
+        export TF_VAR_registry_name=${{ env.REGISTRY_NAME }}
+        export TF_VAR_client_id=${{ secrets.AZURE_CLIENT_ID }}
+        export TF_VAR_client_secret=${{ secrets.AZURE_CLIENT_SECRET }}
+        export TF_VAR_tenant_id=${{ secrets.AZURE_TENANT_ID }}
+        export TF_VAR_subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+        # Check and import existing resources
+        echo "Checking for existing resources..."
+
+        # Import Resource Group if exists
+        if az group show --name "${{ env.AZURE_RESOURCE_GROUP }}" >/dev/null 2>&1; then
+          echo "Resource Group exists, importing..."
+          terraform import azurerm_resource_group.main "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.AZURE_RESOURCE_GROUP }}" || true
+        fi
+
+        # Import Container Registry if exists
+        if az acr show --name "${{ env.REGISTRY_NAME }}" >/dev/null 2>&1; then
+          echo "Container Registry exists, importing..."
+          terraform import azurerm_container_registry.main "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.AZURE_RESOURCE_GROUP }}/providers/Microsoft.ContainerRegistry/registries/${{ env.REGISTRY_NAME }}" || true
+        fi
+
+        # Import App Service Plan if exists
+        if az appservice plan show --name "plan-vehicle-rental-dev" --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" >/dev/null 2>&1; then
+          echo "App Service Plan exists, importing..."
+          terraform import azurerm_service_plan.main "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.AZURE_RESOURCE_GROUP }}/providers/Microsoft.Web/serverfarms/plan-vehicle-rental-dev" || true
+        fi
+
+        # Import App Service if exists
+        if az webapp show --name "app-vehicle-rental-api-dev" --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" >/dev/null 2>&1; then
+          echo "App Service exists, importing..."
+          terraform import azurerm_linux_web_app.api "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.AZURE_RESOURCE_GROUP }}/providers/Microsoft.Web/sites/app-vehicle-rental-api-dev" || true
+        fi
+
+        # Import Static Web App if exists
+        SWA_ID=$(az staticwebapp list --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" --query "[?name=='swa-vehicle-rental-dev'].id" -o tsv 2>/dev/null || echo "")
+        if [ ! -z "$SWA_ID" ]; then
+          echo "Static Web App exists, importing..."
+          terraform import azurerm_static_web_app.frontend "$SWA_ID" || true
+        fi
+
+        # Import Application Insights if exists
+        if az monitor app-insights component show --app "appi-vehicle-rental-dev" --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" >/dev/null 2>&1; then
+          echo "Application Insights exists, importing..."
+          terraform import azurerm_application_insights.main "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.AZURE_RESOURCE_GROUP }}/providers/Microsoft.Insights/components/appi-vehicle-rental-dev" || true
+        fi
+
+        echo "Import phase completed."
+      working-directory: terraform
+
     # Terraform Apply
     - name: Terraform Apply
       run: terraform apply -auto-approve
