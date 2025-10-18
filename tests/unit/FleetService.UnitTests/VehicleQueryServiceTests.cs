@@ -2,7 +2,7 @@ using System.Linq;
 using FleetService.Application;
 using FleetService.Application.Events;
 using FleetService.Domain;
-using FleetService.Infrastructure;
+using FleetService.Infrastructure.Repositories;
 using VehicleRentalSystem.SharedKernel;
 
 namespace FleetService.UnitTests;
@@ -23,7 +23,7 @@ public class VehicleQueryServiceTests
     {
         var locationResult = Location.Create(47.6062, -122.3321);
         Assert.True(locationResult.IsSuccess);
-        var vehicle = Vehicle.Create(Guid.NewGuid(), "VIN123456789", "Seattle Car", locationResult.Value!, VehicleStatus.Available).Value!;
+        var vehicle = Vehicle.Create("VIN123456789", locationResult.Value!, VehicleStatus.Available).Value!;
         await _repository.SaveAsync(vehicle, CancellationToken.None);
 
         var query = new NearbyVehiclesQuery(47.6062, -122.3321, 2);

@@ -17,11 +17,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FleetService.Infrastructure
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FleetService.Api", "FleetService\FleetService.Api\FleetService.Api.csproj", "{942B0E3A-F173-4102-B836-A7DC9192B4F6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FleetService.UnitTests", "FleetService\FleetService.UnitTests\FleetService.UnitTests.csproj", "{4B5E8A7A-F907-4C1C-947A-8823712F4516}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VehicleSimulator", "VehicleSimulator\VehicleSimulator.csproj", "{B8F6C7A9-1234-5678-9ABC-DEF012345678}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VehicleSimulator.Tests", "..\..\tests\unit\VehicleSimulator.Tests\VehicleSimulator.Tests.csproj", "{E70C290F-974D-4A73-8DAC-E4F484740B01}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FleetService.UnitTests", "..\..\tests\unit\FleetService.UnitTests\FleetService.UnitTests.csproj", "{065F5BD6-1D35-4512-92C9-BB575776E9AB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -105,18 +105,6 @@ Global
 		{942B0E3A-F173-4102-B836-A7DC9192B4F6}.Release|x64.Build.0 = Release|Any CPU
 		{942B0E3A-F173-4102-B836-A7DC9192B4F6}.Release|x86.ActiveCfg = Release|Any CPU
 		{942B0E3A-F173-4102-B836-A7DC9192B4F6}.Release|x86.Build.0 = Release|Any CPU
-		{4B5E8A7A-F907-4C1C-947A-8823712F4516}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4B5E8A7A-F907-4C1C-947A-8823712F4516}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4B5E8A7A-F907-4C1C-947A-8823712F4516}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{4B5E8A7A-F907-4C1C-947A-8823712F4516}.Debug|x64.Build.0 = Debug|Any CPU
-		{4B5E8A7A-F907-4C1C-947A-8823712F4516}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{4B5E8A7A-F907-4C1C-947A-8823712F4516}.Debug|x86.Build.0 = Debug|Any CPU
-		{4B5E8A7A-F907-4C1C-947A-8823712F4516}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4B5E8A7A-F907-4C1C-947A-8823712F4516}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4B5E8A7A-F907-4C1C-947A-8823712F4516}.Release|x64.ActiveCfg = Release|Any CPU
-		{4B5E8A7A-F907-4C1C-947A-8823712F4516}.Release|x64.Build.0 = Release|Any CPU
-		{4B5E8A7A-F907-4C1C-947A-8823712F4516}.Release|x86.ActiveCfg = Release|Any CPU
-		{4B5E8A7A-F907-4C1C-947A-8823712F4516}.Release|x86.Build.0 = Release|Any CPU
 		{B8F6C7A9-1234-5678-9ABC-DEF012345678}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B8F6C7A9-1234-5678-9ABC-DEF012345678}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B8F6C7A9-1234-5678-9ABC-DEF012345678}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -141,6 +129,18 @@ Global
 		{E70C290F-974D-4A73-8DAC-E4F484740B01}.Release|x64.Build.0 = Release|Any CPU
 		{E70C290F-974D-4A73-8DAC-E4F484740B01}.Release|x86.ActiveCfg = Release|Any CPU
 		{E70C290F-974D-4A73-8DAC-E4F484740B01}.Release|x86.Build.0 = Release|Any CPU
+		{065F5BD6-1D35-4512-92C9-BB575776E9AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{065F5BD6-1D35-4512-92C9-BB575776E9AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{065F5BD6-1D35-4512-92C9-BB575776E9AB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{065F5BD6-1D35-4512-92C9-BB575776E9AB}.Debug|x64.Build.0 = Debug|Any CPU
+		{065F5BD6-1D35-4512-92C9-BB575776E9AB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{065F5BD6-1D35-4512-92C9-BB575776E9AB}.Debug|x86.Build.0 = Debug|Any CPU
+		{065F5BD6-1D35-4512-92C9-BB575776E9AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{065F5BD6-1D35-4512-92C9-BB575776E9AB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{065F5BD6-1D35-4512-92C9-BB575776E9AB}.Release|x64.ActiveCfg = Release|Any CPU
+		{065F5BD6-1D35-4512-92C9-BB575776E9AB}.Release|x64.Build.0 = Release|Any CPU
+		{065F5BD6-1D35-4512-92C9-BB575776E9AB}.Release|x86.ActiveCfg = Release|Any CPU
+		{065F5BD6-1D35-4512-92C9-BB575776E9AB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -150,6 +150,5 @@ Global
 		{66C0DA3C-E0AD-4764-A635-804A7C17FA52} = {6164899C-C608-5C67-45CC-E2413D664E54}
 		{96E4C2A1-E4B8-4A3E-86B7-E61FC7DEB69E} = {6164899C-C608-5C67-45CC-E2413D664E54}
 		{942B0E3A-F173-4102-B836-A7DC9192B4F6} = {6164899C-C608-5C67-45CC-E2413D664E54}
-		{4B5E8A7A-F907-4C1C-947A-8823712F4516} = {6164899C-C608-5C67-45CC-E2413D664E54}
 	EndGlobalSection
 EndGlobal

@@ -22,9 +22,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FleetService.Application\FleetService.Application.csproj" />
-    <ProjectReference Include="..\FleetService.Domain\FleetService.Domain.csproj" />
-    <ProjectReference Include="..\..\VehicleRentalSystem.SharedKernel\VehicleRentalSystem.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\src\services\FleetService\FleetService.Application\FleetService.Application.csproj" />
+    <ProjectReference Include="..\..\..\src\services\FleetService\FleetService.Domain\FleetService.Domain.csproj" />
+    <ProjectReference Include="..\..\..\src\services\FleetService\FleetService.Infrastructure\FleetService.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\services\VehicleRentalSystem.SharedKernel\VehicleRentalSystem.SharedKernel.csproj" />
   </ItemGroup>
 
 </Project>
