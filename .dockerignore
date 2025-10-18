@@ -50,3 +50,13 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+
+# Terraform
+**/terraform/
+.terraform/
+*.tfstate
+*.tfstate.backup
+terraform.tfvars
+
+# CI/CD
+**/.github/

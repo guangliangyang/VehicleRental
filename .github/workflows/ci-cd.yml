@@ -1,0 +1,159 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  AZURE_RESOURCE_GROUP: rg-vehicle-rental-dev
+  AZURE_LOCATION: eastus
+  REGISTRY_NAME: crvehiclerentaldev
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Setup .NET
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    # Setup Node.js
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: src/web/vehicle-rental-web/package-lock.json
+
+    # Build and test backend
+    - name: Restore .NET dependencies
+      run: dotnet restore src/services/VehicleRentalSystem.sln
+
+    - name: Build .NET solution
+      run: dotnet build src/services/VehicleRentalSystem.sln --no-restore
+
+    - name: Run .NET tests
+      run: dotnet test tests/unit/FleetService.UnitTests --no-build --verbosity normal
+
+    # Build frontend
+    - name: Install npm dependencies
+      run: npm ci
+      working-directory: src/web/vehicle-rental-web
+
+    - name: Build React app
+      run: npm run build
+      working-directory: src/web/vehicle-rental-web
+
+    # Upload build artifacts
+    - name: Upload backend artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-build
+        path: src/services/FleetService/FleetService.Api/bin/Release/net8.0/
+
+    - name: Upload frontend artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-build
+        path: src/web/vehicle-rental-web/build/
+
+  infrastructure:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Setup Terraform
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.6.0
+
+    # Azure Login
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    # Terraform Init
+    - name: Terraform Init
+      run: terraform init
+      working-directory: terraform
+
+    # Terraform Plan
+    - name: Terraform Plan
+      run: terraform plan
+      working-directory: terraform
+      env:
+        TF_VAR_resource_group_name: ${{ env.AZURE_RESOURCE_GROUP }}
+        TF_VAR_location: ${{ env.AZURE_LOCATION }}
+        TF_VAR_registry_name: ${{ env.REGISTRY_NAME }}
+
+    # Terraform Apply
+    - name: Terraform Apply
+      run: terraform apply -auto-approve
+      working-directory: terraform
+      env:
+        TF_VAR_resource_group_name: ${{ env.AZURE_RESOURCE_GROUP }}
+        TF_VAR_location: ${{ env.AZURE_LOCATION }}
+        TF_VAR_registry_name: ${{ env.REGISTRY_NAME }}
+
+  deploy:
+    needs: [build-and-test, infrastructure]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Download artifacts
+    - name: Download backend artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: backend-build
+        path: backend-build
+
+    - name: Download frontend artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-build
+        path: frontend-build
+
+    # Azure Login
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    # Build and push Docker image
+    - name: Build and push Docker image
+      run: |
+        az acr login --name ${{ env.REGISTRY_NAME }}
+        docker build -t ${{ env.REGISTRY_NAME }}.azurecr.io/fleet-api:${{ github.sha }} -f Dockerfile .
+        docker push ${{ env.REGISTRY_NAME }}.azurecr.io/fleet-api:${{ github.sha }}
+
+    # Deploy to Azure App Service
+    - name: Deploy to Azure App Service
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: app-vehicle-rental-api-dev
+        images: ${{ env.REGISTRY_NAME }}.azurecr.io/fleet-api:${{ github.sha }}
+
+    # Deploy frontend to Static Web App
+    - name: Deploy to Azure Static Web Apps
+      uses: Azure/static-web-apps-deploy@v1
+      with:
+        azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        action: "upload"
+        app_location: "frontend-build"
+        skip_app_build: true

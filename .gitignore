@@ -69,7 +69,11 @@ docker-compose.override.yml
 # Terraform state files (if using Infrastructure as Code)
 *.tfstate
 *.tfstate.backup
+*.tfstate.lock.info
 .terraform/
+terraform.tfvars
+terraform.tfvars.json
+**/terraform.tfplan
 
 # Packages
 *.nupkg
