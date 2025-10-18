@@ -53,7 +53,50 @@ resource "azurerm_container_registry" "main" {
   }
 }
 
-# Container Instance for API
+
+# Static Web App for Frontend
+resource "azurerm_static_web_app" "frontend" {
+  name                = "swa-vehicle-rental-dev"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = "East US 2"
+  sku_tier            = "Free"
+  sku_size            = "Free"
+
+  tags = {
+    Environment = "Development"
+    Project     = "VehicleRental"
+  }
+}
+
+# Log Analytics Workspace for Application Insights
+resource "azurerm_log_analytics_workspace" "main" {
+  name                = "law-vehicle-rental-dev"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+
+  tags = {
+    Environment = "Development"
+    Project     = "VehicleRental"
+  }
+}
+
+# Application Insights for monitoring
+resource "azurerm_application_insights" "main" {
+  name                = "appi-vehicle-rental-dev"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_resource_group.main.name
+  workspace_id        = azurerm_log_analytics_workspace.main.id
+  application_type    = "web"
+
+  tags = {
+    Environment = "Development"
+    Project     = "VehicleRental"
+  }
+}
+
+# Container Instance for API (deployed separately after image is available)
 resource "azurerm_container_group" "api" {
   name                = "ci-vehicle-rental-api-dev"
   location            = azurerm_resource_group.main.location
@@ -90,33 +133,6 @@ resource "azurerm_container_group" "api" {
     username = azurerm_container_registry.main.admin_username
     password = azurerm_container_registry.main.admin_password
   }
-
-  tags = {
-    Environment = "Development"
-    Project     = "VehicleRental"
-  }
-}
-
-# Static Web App for Frontend
-resource "azurerm_static_web_app" "frontend" {
-  name                = "swa-vehicle-rental-dev"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = "East US 2"
-  sku_tier            = "Free"
-  sku_size            = "Free"
-
-  tags = {
-    Environment = "Development"
-    Project     = "VehicleRental"
-  }
-}
-
-# Application Insights for monitoring
-resource "azurerm_application_insights" "main" {
-  name                = "appi-vehicle-rental-dev"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-  application_type    = "web"
 
   tags = {
     Environment = "Development"

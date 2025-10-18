@@ -68,7 +68,7 @@ jobs:
         name: frontend-build
         path: src/web/vehicle-rental-web/build/
 
-  infrastructure:
+  infrastructure-base:
     needs: build-and-test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
@@ -118,9 +118,9 @@ jobs:
         ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    # Terraform Plan
-    - name: Terraform Plan
-      run: terraform plan
+    # Terraform Plan (base infrastructure only)
+    - name: Terraform Plan Base Infrastructure
+      run: terraform plan -target=azurerm_resource_group.main -target=azurerm_container_registry.main -target=azurerm_static_web_app.frontend -target=azurerm_log_analytics_workspace.main -target=azurerm_application_insights.main
       working-directory: terraform
       env:
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -136,7 +136,7 @@ jobs:
         TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     # Intelligent Resource Import (for idempotent execution)
-    - name: Import Existing Resources
+    - name: Import Existing Base Resources
       run: |
         # Set environment variables for terraform commands
         export ARM_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}
@@ -151,8 +151,8 @@ jobs:
         export TF_VAR_tenant_id=${{ secrets.AZURE_TENANT_ID }}
         export TF_VAR_subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-        # Check and import existing resources
-        echo "Checking for existing resources..."
+        # Check and import existing base resources
+        echo "Checking for existing base resources..."
 
         # Import Resource Group if exists
         if az group show --name "${{ env.AZURE_RESOURCE_GROUP }}" >/dev/null 2>&1; then
@@ -166,17 +166,17 @@ jobs:
           terraform import azurerm_container_registry.main "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.AZURE_RESOURCE_GROUP }}/providers/Microsoft.ContainerRegistry/registries/${{ env.REGISTRY_NAME }}" || true
         fi
 
-        # Import Container Instance if exists
-        if az container show --name "ci-vehicle-rental-api-dev" --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" >/dev/null 2>&1; then
-          echo "Container Instance exists, importing..."
-          terraform import azurerm_container_group.api "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.AZURE_RESOURCE_GROUP }}/providers/Microsoft.ContainerInstance/containerGroups/ci-vehicle-rental-api-dev" || true
-        fi
-
         # Import Static Web App if exists
         SWA_ID=$(az staticwebapp list --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" --query "[?name=='swa-vehicle-rental-dev'].id" -o tsv 2>/dev/null || echo "")
         if [ ! -z "$SWA_ID" ]; then
           echo "Static Web App exists, importing..."
           terraform import azurerm_static_web_app.frontend "$SWA_ID" || true
+        fi
+
+        # Import Log Analytics Workspace if exists
+        if az monitor log-analytics workspace show --workspace-name "law-vehicle-rental-dev" --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" >/dev/null 2>&1; then
+          echo "Log Analytics Workspace exists, importing..."
+          terraform import azurerm_log_analytics_workspace.main "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.AZURE_RESOURCE_GROUP }}/providers/Microsoft.OperationalInsights/workspaces/law-vehicle-rental-dev" || true
         fi
 
         # Import Application Insights if exists
@@ -185,12 +185,12 @@ jobs:
           terraform import azurerm_application_insights.main "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.AZURE_RESOURCE_GROUP }}/providers/Microsoft.Insights/components/appi-vehicle-rental-dev" || true
         fi
 
-        echo "Import phase completed."
+        echo "Base resource import phase completed."
       working-directory: terraform
 
-    # Terraform Apply
-    - name: Terraform Apply
-      run: terraform apply -auto-approve
+    # Terraform Apply (base infrastructure only)
+    - name: Terraform Apply Base Infrastructure
+      run: terraform apply -auto-approve -target=azurerm_resource_group.main -target=azurerm_container_registry.main -target=azurerm_static_web_app.frontend -target=azurerm_log_analytics_workspace.main -target=azurerm_application_insights.main
       working-directory: terraform
       env:
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -205,26 +205,20 @@ jobs:
         TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
         TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-  deploy:
-    needs: [build-and-test, infrastructure]
+  build-and-push-image:
+    needs: infrastructure-base
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
 
     steps:
     - uses: actions/checkout@v4
 
-    # Download artifacts
+    # Download backend artifacts
     - name: Download backend artifacts
       uses: actions/download-artifact@v4
       with:
         name: backend-build
         path: backend-build
-
-    - name: Download frontend artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: frontend-build
-        path: frontend-build
 
     # Azure Login
     - name: Azure Login
@@ -237,17 +231,111 @@ jobs:
       run: |
         az acr login --name ${{ env.REGISTRY_NAME }}
         docker build -t ${{ env.REGISTRY_NAME }}.azurecr.io/fleet-api:${{ github.sha }} -f Dockerfile .
+        docker tag ${{ env.REGISTRY_NAME }}.azurecr.io/fleet-api:${{ github.sha }} ${{ env.REGISTRY_NAME }}.azurecr.io/fleet-api:latest
         docker push ${{ env.REGISTRY_NAME }}.azurecr.io/fleet-api:${{ github.sha }}
+        docker push ${{ env.REGISTRY_NAME }}.azurecr.io/fleet-api:latest
 
-    # Deploy to Azure Container Instance
-    - name: Deploy to Azure Container Instance
+  deploy-container:
+    needs: build-and-push-image
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Setup Terraform
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.6.0
+
+    # Azure Login
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    # Terraform Init
+    - name: Terraform Init
+      run: terraform init
+      working-directory: terraform
+      env:
+        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    # Terraform Plan (container only)
+    - name: Terraform Plan Container
+      run: terraform plan -target=azurerm_container_group.api
+      working-directory: terraform
+      env:
+        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        TF_VAR_resource_group_name: ${{ env.AZURE_RESOURCE_GROUP }}
+        TF_VAR_location: ${{ env.AZURE_LOCATION }}
+        TF_VAR_registry_name: ${{ env.REGISTRY_NAME }}
+        TF_VAR_client_id: ${{ secrets.AZURE_CLIENT_ID }}
+        TF_VAR_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+        TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
+        TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    # Import Container Instance if exists
+    - name: Import Container Instance
       run: |
-        # Update container instance with new image
-        az container restart --name ci-vehicle-rental-api-dev --resource-group ${{ env.AZURE_RESOURCE_GROUP }}
+        # Set environment variables for terraform commands
+        export ARM_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}
+        export ARM_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }}
+        export ARM_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}
+        export ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        export TF_VAR_resource_group_name=${{ env.AZURE_RESOURCE_GROUP }}
+        export TF_VAR_location=${{ env.AZURE_LOCATION }}
+        export TF_VAR_registry_name=${{ env.REGISTRY_NAME }}
+        export TF_VAR_client_id=${{ secrets.AZURE_CLIENT_ID }}
+        export TF_VAR_client_secret=${{ secrets.AZURE_CLIENT_SECRET }}
+        export TF_VAR_tenant_id=${{ secrets.AZURE_TENANT_ID }}
+        export TF_VAR_subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-        # Wait for container to be ready
-        echo "Waiting for container to be ready..."
-        sleep 30
+        # Import Container Instance if exists
+        if az container show --name "ci-vehicle-rental-api-dev" --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" >/dev/null 2>&1; then
+          echo "Container Instance exists, importing..."
+          terraform import azurerm_container_group.api "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.AZURE_RESOURCE_GROUP }}/providers/Microsoft.ContainerInstance/containerGroups/ci-vehicle-rental-api-dev" || true
+        fi
+      working-directory: terraform
+
+    # Terraform Apply (container only)
+    - name: Terraform Apply Container
+      run: terraform apply -auto-approve -target=azurerm_container_group.api
+      working-directory: terraform
+      env:
+        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        TF_VAR_resource_group_name: ${{ env.AZURE_RESOURCE_GROUP }}
+        TF_VAR_location: ${{ env.AZURE_LOCATION }}
+        TF_VAR_registry_name: ${{ env.REGISTRY_NAME }}
+        TF_VAR_client_id: ${{ secrets.AZURE_CLIENT_ID }}
+        TF_VAR_client_secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+        TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
+        TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+  deploy-frontend:
+    needs: [build-and-test, infrastructure-base]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Download frontend artifacts
+    - name: Download frontend artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-build
+        path: frontend-build
 
     # Deploy frontend to Static Web App
     - name: Deploy to Azure Static Web Apps
