@@ -6,11 +6,9 @@ public sealed class IoTHubOptions
     public int SendIntervalSeconds { get; set; } = 5;
 }
 
-public sealed class SimulatedVehicleOptions
-{
-    public string DeviceId { get; set; } = string.Empty;
-    public string VehicleId { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string Route { get; set; } = string.Empty;
-    public string DeviceConnectionString { get; set; } = string.Empty;
-}
+public sealed record SimulatedVehicleOptions(
+    string DeviceId = "",
+    string VehicleId = "",
+    string Name = "",
+    string Route = "",
+    string DeviceConnectionString = "");

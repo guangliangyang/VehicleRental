@@ -5,6 +5,9 @@ using Microsoft.Extensions.Logging;
 using VehicleSimulator.Configuration;
 using VehicleSimulator.Services;
 
+// Load environment variables from .env file
+DotNetEnv.Env.Load();
+
 var builder = Host.CreateApplicationBuilder(args);
 
 // Configure logging
@@ -14,8 +17,31 @@ builder.Logging.AddConsole();
 // Configure options
 builder.Services.Configure<IoTHubOptions>(builder.Configuration.GetSection("IoTHub"));
 
-// Configure vehicles array differently
+// Configure vehicles array with environment variable substitution
 var vehiclesConfig = builder.Configuration.GetSection("SimulatedVehicles").Get<SimulatedVehicleOptions[]>() ?? Array.Empty<SimulatedVehicleOptions>();
+
+// Replace connection strings from environment variables
+for (int i = 0; i < vehiclesConfig.Length; i++)
+{
+    var deviceId = vehiclesConfig[i].DeviceId;
+    var envVarName = deviceId switch
+    {
+        "TBOX-SEATTLE-001" => "DEVICE_CONNECTION_STRING_SEATTLE_001",
+        "TBOX-SEATTLE-002" => "DEVICE_CONNECTION_STRING_SEATTLE_002",
+        "TBOX-SEATTLE-003" => "DEVICE_CONNECTION_STRING_SEATTLE_003",
+        _ => null
+    };
+
+    if (envVarName != null)
+    {
+        var connectionString = Environment.GetEnvironmentVariable(envVarName);
+        if (!string.IsNullOrEmpty(connectionString))
+        {
+            vehiclesConfig[i] = vehiclesConfig[i] with { DeviceConnectionString = connectionString };
+        }
+    }
+}
+
 builder.Services.AddSingleton(vehiclesConfig);
 
 // Register services
