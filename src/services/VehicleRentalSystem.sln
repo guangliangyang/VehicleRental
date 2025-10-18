@@ -19,8 +19,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FleetService.Api", "FleetSe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VehicleSimulator", "VehicleSimulator\VehicleSimulator.csproj", "{B8F6C7A9-1234-5678-9ABC-DEF012345678}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VehicleSimulator.Tests", "..\..\tests\unit\VehicleSimulator.Tests\VehicleSimulator.Tests.csproj", "{E70C290F-974D-4A73-8DAC-E4F484740B01}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FleetService.UnitTests", "..\..\tests\unit\FleetService.UnitTests\FleetService.UnitTests.csproj", "{065F5BD6-1D35-4512-92C9-BB575776E9AB}"
 EndProject
 Global
