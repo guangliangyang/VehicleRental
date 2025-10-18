@@ -96,6 +96,27 @@ resource "azurerm_application_insights" "main" {
   }
 }
 
+# Key Vault for secure configuration storage
+resource "azurerm_key_vault" "main" {
+  name                = "kv-vehicle-rental-dev"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+  tenant_id           = var.tenant_id
+  sku_name            = "standard"
+
+  # Service Principal access policy for CI/CD
+  access_policy {
+    tenant_id = var.tenant_id
+    object_id = var.client_id
+    secret_permissions = ["Get", "List"]
+  }
+
+  tags = {
+    Environment = "Development"
+    Project     = "VehicleRental"
+  }
+}
+
 # Container Instance for API (deployed separately after image is available)
 resource "azurerm_container_group" "api" {
   name                = "ci-vehicle-rental-api-dev"
@@ -104,6 +125,11 @@ resource "azurerm_container_group" "api" {
   ip_address_type     = "Public"
   dns_name_label      = "vehicle-rental-api-dev"
   os_type             = "Linux"
+
+  # System assigned identity for Key Vault access
+  identity {
+    type = "SystemAssigned"
+  }
 
   container {
     name   = "fleet-api"
@@ -122,6 +148,12 @@ resource "azurerm_container_group" "api" {
     }
 
     secure_environment_variables = {
+      # Cosmos DB configuration from Key Vault
+      COSMOS_ENDPOINT     = "@Microsoft.KeyVault(VaultName=kv-vehicle-rental-dev;SecretName=cosmos-endpoint)"
+      COSMOS_KEY          = "@Microsoft.KeyVault(VaultName=kv-vehicle-rental-dev;SecretName=cosmos-key)"
+      COSMOS_DATABASE_ID  = "@Microsoft.KeyVault(VaultName=kv-vehicle-rental-dev;SecretName=cosmos-database-id)"
+      COSMOS_CONTAINER_ID = "@Microsoft.KeyVault(VaultName=kv-vehicle-rental-dev;SecretName=cosmos-container-id)"
+      # Docker registry credentials
       DOCKER_REGISTRY_SERVER_URL      = "https://${azurerm_container_registry.main.login_server}"
       DOCKER_REGISTRY_SERVER_USERNAME = azurerm_container_registry.main.admin_username
       DOCKER_REGISTRY_SERVER_PASSWORD = azurerm_container_registry.main.admin_password
@@ -138,4 +170,13 @@ resource "azurerm_container_group" "api" {
     Environment = "Development"
     Project     = "VehicleRental"
   }
+}
+
+# Key Vault access policy for Container Instance system identity
+resource "azurerm_key_vault_access_policy" "container_instance" {
+  key_vault_id = azurerm_key_vault.main.id
+  tenant_id    = var.tenant_id
+  object_id    = azurerm_container_group.api.identity[0].principal_id
+
+  secret_permissions = ["Get"]
 }

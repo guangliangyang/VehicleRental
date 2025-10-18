@@ -120,7 +120,7 @@ jobs:
 
     # Terraform Plan (base infrastructure only)
     - name: Terraform Plan Base Infrastructure
-      run: terraform plan -target=azurerm_resource_group.main -target=azurerm_container_registry.main -target=azurerm_static_web_app.frontend -target=azurerm_log_analytics_workspace.main -target=azurerm_application_insights.main
+      run: terraform plan -target=azurerm_resource_group.main -target=azurerm_container_registry.main -target=azurerm_static_web_app.frontend -target=azurerm_log_analytics_workspace.main -target=azurerm_application_insights.main -target=azurerm_key_vault.main
       working-directory: terraform
       env:
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -185,12 +185,18 @@ jobs:
           terraform import azurerm_application_insights.main "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.AZURE_RESOURCE_GROUP }}/providers/Microsoft.Insights/components/appi-vehicle-rental-dev" || true
         fi
 
+        # Import Key Vault if exists
+        if az keyvault show --name "kv-vehicle-rental-dev" --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" >/dev/null 2>&1; then
+          echo "Key Vault exists, importing..."
+          terraform import azurerm_key_vault.main "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.AZURE_RESOURCE_GROUP }}/providers/Microsoft.KeyVault/vaults/kv-vehicle-rental-dev" || true
+        fi
+
         echo "Base resource import phase completed."
       working-directory: terraform
 
     # Terraform Apply (base infrastructure only)
     - name: Terraform Apply Base Infrastructure
-      run: terraform apply -auto-approve -target=azurerm_resource_group.main -target=azurerm_container_registry.main -target=azurerm_static_web_app.frontend -target=azurerm_log_analytics_workspace.main -target=azurerm_application_insights.main
+      run: terraform apply -auto-approve -target=azurerm_resource_group.main -target=azurerm_container_registry.main -target=azurerm_static_web_app.frontend -target=azurerm_log_analytics_workspace.main -target=azurerm_application_insights.main -target=azurerm_key_vault.main
       working-directory: terraform
       env:
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -267,7 +273,7 @@ jobs:
 
     # Terraform Plan (container only)
     - name: Terraform Plan Container
-      run: terraform plan -target=azurerm_container_group.api
+      run: terraform plan -target=azurerm_container_group.api -target=azurerm_key_vault_access_policy.container_instance
       working-directory: terraform
       env:
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -307,7 +313,7 @@ jobs:
 
     # Terraform Apply (container only)
     - name: Terraform Apply Container
-      run: terraform apply -auto-approve -target=azurerm_container_group.api
+      run: terraform apply -auto-approve -target=azurerm_container_group.api -target=azurerm_key_vault_access_policy.container_instance
       working-directory: terraform
       env:
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
