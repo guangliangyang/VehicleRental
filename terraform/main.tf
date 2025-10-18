@@ -138,7 +138,7 @@ resource "azurerm_container_group" "api" {
     memory = "1.5"
 
     # Keep container running for debugging
-    command = ["tail", "-f", "/dev/null"]
+    commands = ["tail", "-f", "/dev/null"]
 
     ports {
       port     = 80
