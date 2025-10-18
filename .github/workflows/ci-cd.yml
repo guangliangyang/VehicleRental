@@ -37,10 +37,10 @@ jobs:
       run: dotnet restore src/services/VehicleRentalSystem.sln
 
     - name: Build .NET solution
-      run: dotnet build src/services/VehicleRentalSystem.sln --no-restore
+      run: dotnet build src/services/VehicleRentalSystem.sln --no-restore --configuration Release
 
     - name: Run .NET tests
-      run: dotnet test tests/unit/FleetService.UnitTests --no-build --verbosity normal
+      run: dotnet test tests/unit/FleetService.UnitTests --configuration Release --no-build --verbosity normal
 
     # Build frontend
     - name: Install npm dependencies
@@ -51,12 +51,16 @@ jobs:
       run: npm run build
       working-directory: src/web/vehicle-rental-web
 
+    # Publish backend for deployment
+    - name: Publish .NET API
+      run: dotnet publish src/services/FleetService/FleetService.Api/FleetService.Api.csproj --configuration Release --output ./publish
+
     # Upload build artifacts
     - name: Upload backend artifacts
       uses: actions/upload-artifact@v4
       with:
         name: backend-build
-        path: src/services/FleetService/FleetService.Api/bin/Release/net8.0/
+        path: ./publish/
 
     - name: Upload frontend artifacts
       uses: actions/upload-artifact@v4

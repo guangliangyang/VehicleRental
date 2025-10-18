@@ -117,6 +117,9 @@ After successful deployment:
 2. **"Insufficient permissions"** - Verify service principal has Contributor role
 3. **"Docker build failed"** - Check Dockerfile and .dockerignore configuration
 4. **"Tests failed"** - Review test output in GitHub Actions logs
+5. **"Additional quota required"** - Azure subscription quota limits reached
+   - **Solution**: Configuration updated to use F1 (Free) tier instead of B1
+   - **Alternative**: Request quota increase in Azure portal under Support → New Support Request
 
 ### Manual Cleanup
 
@@ -128,11 +131,13 @@ az group delete --name rg-vehicle-rental-dev --yes --no-wait
 
 ## Cost Estimation
 
-Monthly cost (~$50 USD):
-- App Service B1: ~$14
+Monthly cost (~$5 USD):
+- App Service F1 (Free): $0
 - Container Registry Basic: ~$5
 - Static Web App Free: $0
-- Application Insights: ~$2-5
+- Application Insights: ~$2-5 (based on usage)
+
+**Note**: F1 tier has limitations (60 CPU minutes/day, 1GB storage) but is perfect for learning and development.
 
 ## Next Steps
 

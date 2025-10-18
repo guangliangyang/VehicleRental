@@ -5,12 +5,7 @@ terraform {
       version = "~>3.0"
     }
   }
-  backend "azurerm" {
-    resource_group_name  = "rg-terraform-state"
-    storage_account_name = "stterraformstatevc"
-    container_name       = "tfstate"
-    key                  = "vehicle-rental.tfstate"
-  }
+  # No backend configuration - uses local state for simplicity
 }
 
 provider "azurerm" {
@@ -54,7 +49,7 @@ resource "azurerm_service_plan" "main" {
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
   os_type             = "Linux"
-  sku_name            = "B1"
+  sku_name            = "F1"
 
   tags = {
     Environment = "Development"
@@ -77,9 +72,9 @@ resource "azurerm_linux_web_app" "api" {
   }
 
   app_settings = {
-    DOCKER_REGISTRY_SERVER_URL      = "https://${azurerm_container_registry.main.login_server}"
-    DOCKER_REGISTRY_SERVER_USERNAME = azurerm_container_registry.main.admin_username
-    DOCKER_REGISTRY_SERVER_PASSWORD = azurerm_container_registry.main.admin_password
+    DOCKER_REGISTRY_SERVER_URL          = "https://${azurerm_container_registry.main.login_server}"
+    DOCKER_REGISTRY_SERVER_USERNAME     = azurerm_container_registry.main.admin_username
+    DOCKER_REGISTRY_SERVER_PASSWORD     = azurerm_container_registry.main.admin_password
     WEBSITES_ENABLE_APP_SERVICE_STORAGE = false
   }
 
