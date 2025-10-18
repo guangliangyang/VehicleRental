@@ -50,13 +50,13 @@ For production, consider using remote state:
 ```bash
 # Create storage account for Terraform state
 az group create --name rg-terraform-state --location eastus
-az storage account create --name stterraformstate-vc --resource-group rg-terraform-state
+az storage account create --name stterraformstatevc --resource-group rg-terraform-state
 
 # Update terraform/main.tf with backend configuration
 terraform {
   backend "azurerm" {
     resource_group_name  = "rg-terraform-state"
-    storage_account_name = "stterraformstate-vc"
+    storage_account_name = "stterraformstatevc"
     container_name       = "tfstate"
     key                  = "vehicle-rental.tfstate"
   }
