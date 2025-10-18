@@ -120,7 +120,7 @@ jobs:
 
     # Terraform Plan (base infrastructure only)
     - name: Terraform Plan Base Infrastructure
-      run: terraform plan -target=azurerm_resource_group.main -target=azurerm_container_registry.main -target=azurerm_static_web_app.frontend -target=azurerm_log_analytics_workspace.main -target=azurerm_application_insights.main -target=azurerm_key_vault.main
+      run: terraform plan -target=azurerm_resource_group.main -target=azurerm_container_registry.main -target=azurerm_static_web_app.frontend -target=azurerm_log_analytics_workspace.main -target=azurerm_application_insights.main -target=azurerm_key_vault.main -target=azurerm_container_app_environment.main
       working-directory: terraform
       env:
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -204,7 +204,7 @@ jobs:
 
     # Terraform Apply (base infrastructure only)
     - name: Terraform Apply Base Infrastructure
-      run: terraform apply -auto-approve -target=azurerm_resource_group.main -target=azurerm_container_registry.main -target=azurerm_static_web_app.frontend -target=azurerm_log_analytics_workspace.main -target=azurerm_application_insights.main -target=azurerm_key_vault.main
+      run: terraform apply -auto-approve -target=azurerm_resource_group.main -target=azurerm_container_registry.main -target=azurerm_static_web_app.frontend -target=azurerm_log_analytics_workspace.main -target=azurerm_application_insights.main -target=azurerm_key_vault.main -target=azurerm_container_app_environment.main
       working-directory: terraform
       env:
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -283,9 +283,9 @@ jobs:
         ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    # Terraform Plan (container only)
-    - name: Terraform Plan Container
-      run: terraform plan -target=azurerm_container_group.api -target=azurerm_key_vault_access_policy.container_instance
+    # Terraform Plan (container app only)
+    - name: Terraform Plan Container App
+      run: terraform plan -target=azurerm_container_app.api -target=azurerm_key_vault_access_policy.container_app
       working-directory: terraform
       env:
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -304,8 +304,8 @@ jobs:
         TF_VAR_cosmos_database_id: ${{ secrets.COSMOS_DATABASE_ID }}
         TF_VAR_cosmos_container_id: ${{ secrets.COSMOS_CONTAINER_ID }}
 
-    # Import Container Instance if exists
-    - name: Import Container Instance
+    # Import Container App if exists
+    - name: Import Container App
       run: |
         # Set environment variables for terraform commands
         export ARM_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}
@@ -324,16 +324,16 @@ jobs:
         export TF_VAR_cosmos_database_id="${{ secrets.COSMOS_DATABASE_ID }}"
         export TF_VAR_cosmos_container_id="${{ secrets.COSMOS_CONTAINER_ID }}"
 
-        # Import Container Instance if exists
-        if az container show --name "ci-vehicle-rental-api-dev" --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" >/dev/null 2>&1; then
-          echo "Container Instance exists, importing..."
-          terraform import azurerm_container_group.api "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.AZURE_RESOURCE_GROUP }}/providers/Microsoft.ContainerInstance/containerGroups/ci-vehicle-rental-api-dev" || true
+        # Import Container App if exists
+        if az containerapp show --name "ca-vehicle-rental-api-dev" --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" >/dev/null 2>&1; then
+          echo "Container App exists, importing..."
+          terraform import azurerm_container_app.api "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.AZURE_RESOURCE_GROUP }}/providers/Microsoft.App/containerApps/ca-vehicle-rental-api-dev" || true
         fi
       working-directory: terraform
 
-    # Terraform Apply (container only)
-    - name: Terraform Apply Container
-      run: terraform apply -auto-approve -target=azurerm_container_group.api -target=azurerm_key_vault_access_policy.container_instance
+    # Terraform Apply (container app only)
+    - name: Terraform Apply Container App
+      run: terraform apply -auto-approve -target=azurerm_container_app.api -target=azurerm_key_vault_access_policy.container_app
       working-directory: terraform
       env:
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}

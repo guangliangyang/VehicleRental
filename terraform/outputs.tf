@@ -9,8 +9,13 @@ output "container_registry_url" {
 }
 
 output "api_app_url" {
-  description = "URL of the API container instance"
-  value       = "http://${azurerm_container_group.api.fqdn}"
+  description = "HTTPS URL of the Container App API"
+  value       = "https://${azurerm_container_app.api.latest_revision_fqdn}"
+}
+
+output "container_app_environment_name" {
+  description = "Name of the Container App Environment"
+  value       = azurerm_container_app_environment.main.name
 }
 
 output "frontend_url" {

@@ -117,56 +117,111 @@ resource "azurerm_key_vault" "main" {
   }
 }
 
-# Container Instance for API (deployed separately after image is available)
-resource "azurerm_container_group" "api" {
-  name                = "ci-vehicle-rental-api-dev"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-  ip_address_type     = "Public"
-  dns_name_label      = "vehicle-rental-api-dev"
-  os_type             = "Linux"
+# Container Apps Environment
+resource "azurerm_container_app_environment" "main" {
+  name                       = "cae-vehicle-rental-dev"
+  location                   = azurerm_resource_group.main.location
+  resource_group_name        = azurerm_resource_group.main.name
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+
+  tags = {
+    Environment = "Development"
+    Project     = "VehicleRental"
+  }
+}
+
+# Container App for API
+resource "azurerm_container_app" "api" {
+  name                         = "ca-vehicle-rental-api-dev"
+  container_app_environment_id = azurerm_container_app_environment.main.id
+  resource_group_name          = azurerm_resource_group.main.name
+  revision_mode                = "Single"
 
   # System assigned identity for Key Vault access
   identity {
     type = "SystemAssigned"
   }
 
-  container {
-    name   = "fleet-api"
-    image  = "${azurerm_container_registry.main.login_server}/fleet-api:latest"
-    cpu    = "0.5"
-    memory = "1.5"
+  template {
+    min_replicas = 0
+    max_replicas = 1
 
-    # Keep container running for debugging
-    commands = ["tail", "-f", "/dev/null"]
+    container {
+      name   = "fleet-api"
+      image  = "${azurerm_container_registry.main.login_server}/fleet-api:latest"
+      cpu    = 0.5
+      memory = "1Gi"
 
-    ports {
-      port     = 8080
-      protocol = "TCP"
-    }
+      env {
+        name  = "ASPNETCORE_ENVIRONMENT"
+        value = "Production"
+      }
 
-    environment_variables = {
-      ASPNETCORE_ENVIRONMENT = "Production"
-      ASPNETCORE_URLS       = "http://+:8080"
-    }
+      env {
+        name  = "ASPNETCORE_URLS"
+        value = "http://+:8080"
+      }
 
-    secure_environment_variables = {
-      # Cosmos DB configuration from variables (passed via GitHub Secrets)
-      COSMOS_ENDPOINT     = var.cosmos_endpoint
-      COSMOS_KEY          = var.cosmos_key
-      COSMOS_DATABASE_ID  = var.cosmos_database_id
-      COSMOS_CONTAINER_ID = var.cosmos_container_id
-      # Docker registry credentials
-      DOCKER_REGISTRY_SERVER_URL      = "https://${azurerm_container_registry.main.login_server}"
-      DOCKER_REGISTRY_SERVER_USERNAME = azurerm_container_registry.main.admin_username
-      DOCKER_REGISTRY_SERVER_PASSWORD = azurerm_container_registry.main.admin_password
+      env {
+        name        = "COSMOS_ENDPOINT"
+        secret_name = "cosmos-endpoint"
+      }
+
+      env {
+        name        = "COSMOS_KEY"
+        secret_name = "cosmos-key"
+      }
+
+      env {
+        name        = "COSMOS_DATABASE_ID"
+        secret_name = "cosmos-database-id"
+      }
+
+      env {
+        name        = "COSMOS_CONTAINER_ID"
+        secret_name = "cosmos-container-id"
+      }
     }
   }
 
-  image_registry_credential {
+  secret {
+    name  = "cosmos-endpoint"
+    value = var.cosmos_endpoint
+  }
+
+  secret {
+    name  = "cosmos-key"
+    value = var.cosmos_key
+  }
+
+  secret {
+    name  = "cosmos-database-id"
+    value = var.cosmos_database_id
+  }
+
+  secret {
+    name  = "cosmos-container-id"
+    value = var.cosmos_container_id
+  }
+
+  ingress {
+    external_enabled = true
+    target_port      = 8080
+    traffic_weight {
+      percentage = 100
+      latest_revision = true
+    }
+  }
+
+  registry {
     server   = azurerm_container_registry.main.login_server
     username = azurerm_container_registry.main.admin_username
-    password = azurerm_container_registry.main.admin_password
+    password_secret_name = "registry-password"
+  }
+
+  secret {
+    name  = "registry-password"
+    value = azurerm_container_registry.main.admin_password
   }
 
   tags = {
@@ -175,11 +230,11 @@ resource "azurerm_container_group" "api" {
   }
 }
 
-# Key Vault access policy for Container Instance system identity
-resource "azurerm_key_vault_access_policy" "container_instance" {
+# Key Vault access policy for Container App system identity
+resource "azurerm_key_vault_access_policy" "container_app" {
   key_vault_id = azurerm_key_vault.main.id
   tenant_id    = var.tenant_id
-  object_id    = azurerm_container_group.api.identity[0].principal_id
+  object_id    = azurerm_container_app.api.identity[0].principal_id
 
   secret_permissions = ["Get"]
 }
