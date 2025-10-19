@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using FleetService.Api;
 using FleetService.Domain;
+using Xunit;
 
 namespace FleetService.IntegrationTests;
 

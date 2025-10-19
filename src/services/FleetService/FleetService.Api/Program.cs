@@ -25,3 +25,5 @@ app.MapVehicleEndpoints();
 await app.InitializeServicesAsync();
 
 app.Run();
+
+public partial class Program { }
