@@ -1,112 +1,169 @@
-# Vehicle Rental System - Vehicle Data Flow
+# Vehicle Rental System
 
-This implementation demonstrates the Vehicle Data Flow from the IoT architecture design, featuring real-time vehicle telemetry processing with Azure services.
+A production-ready IoT vehicle rental platform built with **.NET 8**, **React**, and **Azure services**, featuring real-time vehicle telemetry processing and geo-spatial fleet management.
 
-## Architecture Components
-
-### Vehicle Data Flow (HotPath-Vehicle-Data-Flow.png)
-1. **Vehicle TBOX Simulator** → Sends GPS/Status data via MQTT
-2. **Azure IoT Hub** → Secure device gateway with identity management
-3. **Azure Event Hubs** → High-throughput message buffer (Azure-managed)
-4. **Stream Analytics** → Real-time filtering and processing (Azure-managed)
-5. **Azure Cosmos DB** → Geo-spatial storage with live location updates
-
-## Prerequisites
-
-### Required Azure Services
-Before running the system, you must create and configure these Azure services:
-- **Azure Cosmos DB** (SQL API with geo-spatial indexing)
-- **Azure Event Hubs** namespace and hub (configured in Stream Analytics)
-- **Azure Stream Analytics** job (processes IoT Hub → Cosmos DB data flow)
-- **Azure SignalR Service**
-- **Azure IoT Hub** with device identities
-
-### Device Setup
-Create these device identities in IoT Hub:
-- `TBOX-SEATTLE-001`
-- `TBOX-SEATTLE-002`
-- `TBOX-SEATTLE-003`
-
-## Configuration
-
-Configure your Azure services in `appsettings.json`:
-
-```json
-{
-  "Cosmos": {
-    "Endpoint": "https://your-cosmos-account.documents.azure.com:443/",
-    "Key": "your-cosmos-primary-key",
-    "DatabaseId": "fleet",
-    "ContainerId": "Vehicles"
-  },
-  "SignalR": {
-    "ConnectionString": "Endpoint=https://your-signalr-service.service.signalr.net;AccessKey=your-access-key",
-    "HubName": "vehicles"
-  },
-  "IoTHub": {
-    "ConnectionString": "HostName=your-iothub.azure-devices.net;SharedAccessKeyName=iothubowner;SharedAccessKey=your-key",
-    "SendIntervalSeconds": 5
-  }
-}
-```
-
-## Running the System
+## 🚀 Quick Start
 
 ```bash
-# Start the Fleet Service API
-dotnet run --project src/services/FleetService/FleetService.Api
+# Clone and setup
+git clone https://github.com/guangliangyang/VehicleRental.git
+cd VehicleRental
 
-# Start the Vehicle Simulator (sends telemetry data)
+# Setup development environment (copies configs, installs dependencies, builds, tests)
+./scripts/dev-setup.sh
+
+# Start backend API
+dotnet run --project src/services/FleetService/FleetService.Api --urls "http://localhost:5000"
+
+# Start frontend (in separate terminal)
+cd src/web/vehicle-rental-web && npm start
+
+# Start vehicle simulator (optional)
 dotnet run --project src/services/VehicleSimulator
 ```
 
-## Architecture Features
+**Access Points:**
+- **API**: http://localhost:5000
+- **Swagger**: http://localhost:5000/swagger
+- **Frontend**: http://localhost:3000
 
-### Real-time Processing
-- **Azure Stream Analytics**: Validates speed, heading, and message age (Azure-managed)
-- **Geo-spatial queries**: Uses Cosmos DB `ST_DISTANCE` for nearby vehicle searches
-- **Live updates**: SignalR pushes location changes to connected clients
+## 🏗️ Architecture
 
-### Data Flow Components
-- **VehicleTelemetryMessage**: Extended model with Status, Speed, Heading
-- **Azure Stream Analytics**: Implements filtering and writes to Cosmos DB (Azure-managed)
-- **CosmosVehicleRepository**: Geo-spatial storage with GeoJSON Point format
+### Clean Architecture + DDD
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   React SPA     │────│   .NET 8 API    │────│   Azure Cloud   │
+│                 │    │                  │    │                 │
+│ • Vehicle Map   │    │ • Clean Arch     │    │ • Cosmos DB     │
+│ • Real-time UI  │    │ • DDD Patterns   │    │ • SignalR       │
+│ • SignalR Hub   │    │ • Result Pattern │    │ • Key Vault     │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+```
 
-### Production Features
-- **Azure-native**: Fully integrated with Azure IoT and data services
-- **Geo-spatial storage**: Cosmos DB with spatial indexing for efficient queries
-- **Real-time telemetry**: Live vehicle data processing and updates
+### Vehicle Data Flow
+```
+Vehicle TBOX → IoT Hub → Event Hubs → Stream Analytics → Cosmos DB
+                                                              ↓
+React Frontend ← SignalR ← Fleet API ← Real-time Updates ←────┘
+```
 
-## Testing the System
+## 🛠️ Technology Stack
 
-### API Testing
+**Backend (.NET 8)**
+- **Clean Architecture** with Domain-Driven Design
+- **ASP.NET Core** with Minimal APIs
+- **Azure Cosmos DB** for geo-spatial storage
+- **SignalR** for real-time updates
+- **Result Pattern** for robust error handling
+- **xUnit** for comprehensive testing
+
+**Frontend (React)**
+- **React 18** with TypeScript
+- **Real-time map** integration
+- **SignalR client** for live updates
+- **Responsive design**
+
+**Cloud (Azure)**
+- **Container Apps** for serverless deployment
+- **Cosmos DB** with geo-spatial indexing
+- **Key Vault** for secret management
+- **Terraform** for Infrastructure as Code
+
+## 📁 Project Structure
+
+```
+VehicleRental/
+├── 📁 src/                          # Source code
+│   ├── 📁 services/                 # Backend services (.NET)
+│   │   ├── FleetService.Domain/     # Domain entities & business logic
+│   │   ├── FleetService.Application/# Use cases & application services
+│   │   ├── FleetService.Infrastructure/# Data access & external services
+│   │   ├── FleetService.Api/        # REST API & controllers
+│   │   ├── VehicleSimulator/        # IoT device simulator
+│   │   └── SharedKernel/            # Common domain primitives
+│   └── 📁 web/                      # Frontend applications
+│       └── vehicle-rental-web/      # React SPA
+├── 📁 tests/                        # All test projects
+│   ├── unit/                        # Unit tests
+│   ├── integration/                 # Integration tests
+│   └── e2e/                         # End-to-end tests
+├── 📁 infra/                        # Infrastructure as Code
+│   ├── container-apps/              # Terraform for Azure Container Apps
+│   └── archive/                     # Legacy configurations
+├── 📁 docs/                         # Documentation
+│   ├── architecture/                # System design & ADRs
+│   ├── api/                         # API documentation
+│   ├── deployment/                  # Deployment guides
+│   └── development/                 # Development setup
+├── 📁 config/                       # Configuration templates
+│   ├── development/                 # Local development configs
+│   ├── staging/                     # Staging environment configs
+│   └── production/                  # Production environment configs
+└── 📁 scripts/                      # Development workflow scripts
+    ├── build.sh                     # Build all components
+    ├── test.sh                      # Run all tests
+    ├── dev-setup.sh                 # Setup development environment
+    └── clean.sh                     # Clean build artifacts
+```
+
+## 🧪 Development Workflow
+
 ```bash
-# Get nearby vehicles (Seattle downtown area)
-curl "http://localhost:5001/vehicles/nearby?latitude=47.6062&longitude=-122.3321&radius=5"
+# Build all components
+./scripts/build.sh
 
-# Test different radius values
-curl "http://localhost:5001/vehicles/nearby?latitude=47.6062&longitude=-122.3321&radius=1"  # 1km
-curl "http://localhost:5001/vehicles/nearby?latitude=47.6062&longitude=-122.3321&radius=10" # 10km
+# Run all tests (unit + integration)
+./scripts/test.sh
 
-# View API documentation
-open http://localhost:5001/swagger
+# Clean build artifacts
+./scripts/clean.sh
 ```
 
-### Azure Stream Analytics Filtering
-Configure your Stream Analytics job to filter out invalid telemetry:
-- Speed outside 0-200 km/h range
-- Heading outside 0-360 degrees
-- Messages older than 5 minutes
+## 🌐 Deployment
 
-## Project Structure
-
-```
-src/services/
-├── VehicleSimulator/              # TBOX device simulator
-├── FleetService.Api/              # REST API endpoints
-├── FleetService.Infrastructure/   # Cosmos DB + SignalR
-├── FleetService.Domain/           # Vehicle aggregate + events
-└── FleetService.Application/      # Query services + DTOs
+**Azure Container Apps** (Recommended)
+```bash
+cd infra/container-apps
+terraform init
+terraform apply
 ```
 
-This system implements a production-ready IoT vehicle rental platform with Azure native services. The data flow (IoT Hub → Event Hubs → Stream Analytics → Cosmos DB) is handled entirely by Azure services, requiring no custom telemetry processing code.
+See [deployment documentation](docs/deployment/) for detailed guides.
+
+## 🔑 Configuration
+
+Use template files for secure configuration:
+
+```bash
+# Copy and customize configuration templates
+cp config/development/api.env.template config/development/api.env
+cp config/production/frontend.env.template config/production/frontend.env
+
+# Edit with your actual Azure credentials
+# Then copy to application locations
+```
+
+## 📚 Documentation
+
+- **[Getting Started](docs/development/local-setup.md)** - Local development setup
+- **[Architecture](docs/architecture/)** - System design and patterns
+- **[API Reference](docs/api/)** - REST API documentation
+- **[Deployment](docs/deployment/)** - Infrastructure and deployment
+- **[Configuration](config/README.md)** - Environment setup
+
+## 🏢 Enterprise Features
+
+- **🛡️ Security**: Azure Key Vault integration with DefaultAzureCredential
+- **📈 Monitoring**: Application Insights and health checks
+- **🔄 CI/CD**: GitHub Actions with Infrastructure as Code
+- **🧪 Testing**: Unit, integration, and E2E test coverage
+- **📝 Documentation**: Comprehensive docs and ADRs
+- **🏗️ Scalability**: Azure Container Apps with auto-scaling
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+**Built with ❤️ for modern cloud-native development**

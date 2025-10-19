@@ -17,8 +17,8 @@ This directory contains comprehensive documentation for the Vehicle Rental Syste
 
 ### 🚀 Deployment
 - **[Azure Container Apps](deployment/container-apps.md)** - Primary deployment strategy
-- **[CI/CD Pipeline](deployment/github-actions.md)** - Automated deployment process
-- **[Infrastructure](deployment/infrastructure.md)** - Terraform and Azure resources
+- **[GitHub Actions CI/CD](deployment/github-actions.md)** - Automated deployment pipeline
+- **[Infrastructure as Code](../infra/README.md)** - Terraform configuration
 
 ### 💻 Development
 - **[Local Setup](development/local-setup.md)** - Getting started with development

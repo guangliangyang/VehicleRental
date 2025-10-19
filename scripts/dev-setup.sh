@@ -67,9 +67,11 @@ print_step "2. Setting up configuration files..."
 
 # Copy configuration files if they don't exist
 if [ ! -f "src/services/FleetService/FleetService.Api/.env" ]; then
-    if [ -f "config/development/api.env" ]; then
-        cp config/development/api.env src/services/FleetService/FleetService.Api/.env
-        print_status "✅ API configuration copied"
+    if [ -f "config/development/api.env.template" ]; then
+        print_warning "⚠️  Please copy and customize configuration:"
+        print_status "1. cp config/development/api.env.template config/development/api.env"
+        print_status "2. Edit config/development/api.env with your Azure credentials"
+        print_status "3. cp config/development/api.env src/services/FleetService/FleetService.Api/.env"
     else
         print_warning "⚠️  API configuration template not found"
     fi
@@ -78,9 +80,11 @@ else
 fi
 
 if [ ! -f "src/web/vehicle-rental-web/.env.production" ]; then
-    if [ -f "config/production/frontend.env" ]; then
-        cp config/production/frontend.env src/web/vehicle-rental-web/.env.production
-        print_status "✅ Frontend configuration copied"
+    if [ -f "config/production/frontend.env.template" ]; then
+        print_warning "⚠️  Please copy and customize frontend configuration:"
+        print_status "1. cp config/production/frontend.env.template config/production/frontend.env"
+        print_status "2. Edit config/production/frontend.env with your API endpoints"
+        print_status "3. cp config/production/frontend.env src/web/vehicle-rental-web/.env.production"
     else
         print_warning "⚠️  Frontend configuration template not found"
     fi
