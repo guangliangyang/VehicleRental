@@ -37,6 +37,12 @@ Thumbs.db
 .env.production.local
 secrets.env
 
+# Configuration files with actual secrets (keep templates)
+config/**/api.env
+config/**/frontend.env
+config/**/*.env
+!config/**/*.env.template
+
 # Azure configuration files with secrets
 *.secrets.json
 appsettings.secrets.json
@@ -77,3 +83,23 @@ terraform.tfvars.json
 
 # Packages
 *.nupkg
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.tsbuildinfo
+.npm
+.eslintcache
+.yarn-integrity
+package-lock.json
+
+# React build output
+build/
+dist/
+
+# Coverage
+coverage/
+*.lcov
+.nyc_output

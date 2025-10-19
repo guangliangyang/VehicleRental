@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VehicleSimulator", "Vehicle
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FleetService.UnitTests", "..\..\tests\unit\FleetService.UnitTests\FleetService.UnitTests.csproj", "{065F5BD6-1D35-4512-92C9-BB575776E9AB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FleetService.IntegrationTests", "..\..\tests\integration\FleetService.IntegrationTests\FleetService.IntegrationTests.csproj", "{165F5BD6-1D35-4512-92C9-BB575776E9BC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -139,6 +141,18 @@ Global
 		{065F5BD6-1D35-4512-92C9-BB575776E9AB}.Release|x64.Build.0 = Release|Any CPU
 		{065F5BD6-1D35-4512-92C9-BB575776E9AB}.Release|x86.ActiveCfg = Release|Any CPU
 		{065F5BD6-1D35-4512-92C9-BB575776E9AB}.Release|x86.Build.0 = Release|Any CPU
+		{165F5BD6-1D35-4512-92C9-BB575776E9BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{165F5BD6-1D35-4512-92C9-BB575776E9BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{165F5BD6-1D35-4512-92C9-BB575776E9BC}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{165F5BD6-1D35-4512-92C9-BB575776E9BC}.Debug|x64.Build.0 = Debug|Any CPU
+		{165F5BD6-1D35-4512-92C9-BB575776E9BC}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{165F5BD6-1D35-4512-92C9-BB575776E9BC}.Debug|x86.Build.0 = Debug|Any CPU
+		{165F5BD6-1D35-4512-92C9-BB575776E9BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{165F5BD6-1D35-4512-92C9-BB575776E9BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{165F5BD6-1D35-4512-92C9-BB575776E9BC}.Release|x64.ActiveCfg = Release|Any CPU
+		{165F5BD6-1D35-4512-92C9-BB575776E9BC}.Release|x64.Build.0 = Release|Any CPU
+		{165F5BD6-1D35-4512-92C9-BB575776E9BC}.Release|x86.ActiveCfg = Release|Any CPU
+		{165F5BD6-1D35-4512-92C9-BB575776E9BC}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
