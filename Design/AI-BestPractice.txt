@@ -1,8 +1,6 @@
 best practice for using AI assistants in programming. 
 
 1. Warm up the AI ​​assistant; it should be familiar with my project structure, coding style, unit tests, and CI/CD. 
-Key project information (architecture, naming conventions, coding style, UT principles, and dependencies) 
-should be written into a file: project_context.md.
 
 2. Start by creating a new branch for each new feature. 
 
@@ -19,7 +17,7 @@ should be written into a file: project_context.md.
     driven by the solution blueprint to make the context as clear as possible. 
 
 6. Start executing each small step. 
-    The prompt should be: Context: project_context.md,The blueprint is in blueprint1.md. This is step x. Use the UTT principle to implement the code. 
+    The prompt should be: The blueprint is in blueprint1.md. This is step x. Use the UTT principle to implement the code. 
     Remember to align the code style, 
     UTT reqrier that Coverage ≥ 80%, Include positive, negative, and abnormal inputs ,Do not rely on external state or real services;
     delete duplicate code and functions, do not add extra features, functions or documents, 
