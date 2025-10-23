@@ -1,0 +1,36 @@
+best practice for using AI assistants in programming. 
+
+1. Warm up the AI ​​assistant; it should be familiar with my project structure, coding style, unit tests, and CI/CD. 
+Key project information (architecture, naming conventions, coding style, UT principles, and dependencies) 
+should be written into a file: project_context.md.
+
+2. Start by creating a new branch for each new feature. 
+
+3. Detail the use case for the new feature. The AI ​​should help clarify the requirements, including inputs, outputs, 
+    exceptions, edge cases, and so on, and discuss them with developers until they confirm. 
+    
+4. Query different AI platforms (ChatGPT, Claude, Grok, Gemni) to find the best practices for this requirement 
+    and weigh their pros and cons. Ultimately, 
+    I arrive at a comprehensive solution and save the detailed plan as a blueprint for the future. 
+    
+5. Instruct the AI ​​assistant to break the solution into small steps, 
+    each of which can be reviewed and verified as quickly as possible. 
+    Save these steps as an execution plan, 
+    driven by the solution blueprint to make the context as clear as possible. 
+
+6. Start executing each small step. 
+    The prompt should be: Context: project_context.md,The blueprint is in blueprint1.md. This is step x. Use the UTT principle to implement the code. 
+    Remember to align the code style, 
+    UTT reqrier that Coverage ≥ 80%, Include positive, negative, and abnormal inputs ,Do not rely on external state or real services;
+    delete duplicate code and functions, do not add extra features, functions or documents, 
+    delete obsolete functions or classes or configurations and documents. 
+    
+    After AI generates the code, run UT, code linters, and verify whether this step is completed. 
+
+7. When all small steps are completed, 
+    align the code style, delete duplicate code and functions, do not add extra features, functions or documents, 
+    delete obsolete functions or classes or configurations and documents, run UT, code linters, 
+    and verify whether this use case is completed and where there is room for improvement. 
+    Give the developer a conclusion. 
+    
+8. The developer confirms and pushes the branch to git
