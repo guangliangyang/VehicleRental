@@ -4,12 +4,18 @@ best practice for using AI assistants in programming.
 
 2. Start by creating a new branch for each new feature. 
 
-3. Detail the use case for the new feature. The AI ​​should help clarify the requirements, including inputs, outputs, 
-    exceptions, edge cases, and so on, and discuss them with developers until they confirm. 
+3. Detail the use case for the new feature. The AI" ​​should help clarify the requirements, including inputs, outputs, 
+    exceptions, edge cases, and so on, give me a entire  user case baseon my project
+  infrasturecture, and save to design/userCase1.md, i will ask other expert to find a best practice solution. ", 
+  and discuss them with developers until they confirm. 
     
 4. Query different AI platforms (ChatGPT, Claude, Grok, Gemni) to find the best practices for this requirement 
+" give me a best practice in 200 words"
     and weigh their pros and cons. Ultimately, 
-    I arrive at a comprehensive solution and save the detailed plan as a blueprint for the future. 
+    " is any cons?"
+    paste response from other AI advice.
+
+    "make a comprehensive solution and save the detailed plan as a blueprint for the future.  and store in design"
     
 5. Instruct the AI ​​assistant to break the solution into small steps, 
     each of which can be reviewed and verified as quickly as possible. 
@@ -17,7 +23,7 @@ best practice for using AI assistants in programming.
     driven by the solution blueprint to make the context as clear as possible. 
 
 6. Start executing each small step. 
-    The prompt should be: The blueprint is in blueprint1.md. This is step x. Use the UTT principle to implement the code. 
+    The prompt should be: The blueprint and plan can be find in Desin1. Use the UTT principle to implement the code. 
     Remember to align the code style, 
     UTT reqrier that Coverage ≥ 80%, Include positive, negative, and abnormal inputs ,Do not rely on external state or real services;
     delete duplicate code and functions, do not add extra features, functions or documents, 
