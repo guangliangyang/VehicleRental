@@ -5,8 +5,9 @@ import { VehicleList } from './components/VehicleList';
 import { FilterPanel } from './components/FilterPanel';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useVehicles } from './hooks/useVehicles';
+import { AuthProvider, AuthButton } from './auth';
 
-function App() {
+const AppContent: React.FC = () => {
   const [radius, setRadius] = useState<number>(5);
   const [statusFilter, setStatusFilter] = useState<string[]>(['Available', 'Rented', 'Maintenance','OutOfService']);
   const [showList, setShowList] = useState<boolean>(false);
@@ -34,9 +35,21 @@ function App() {
   return (
     <div className="App">
       <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-        <header style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <h1 style={{ color: '#333', marginBottom: '8px' }}>🚗 Vehicle Rental System</h1>
-          <p style={{ color: '#666', margin: 0 }}>Find available vehicles near you</p>
+        <header style={{ marginBottom: '30px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div style={{ textAlign: 'left' }}>
+              <h1 style={{ color: '#333', marginBottom: '8px' }}>🚗 Vehicle Rental System</h1>
+              <p style={{ color: '#666', margin: 0 }}>Find available vehicles near you</p>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <AuthButton
+                className="auth-button-header"
+                onLoginSuccess={() => console.log('Login successful')}
+                onLogoutSuccess={() => console.log('Logout successful')}
+                onError={(error) => console.error('Auth error:', error)}
+              />
+            </div>
+          </div>
         </header>
 
         {/* Location Error */}
@@ -152,6 +165,14 @@ function App() {
         </div>
       </div>
     </div>
+  );
+};
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

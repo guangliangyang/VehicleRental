@@ -23,7 +23,7 @@ best practice for using AI assistants in programming.
     driven by the solution blueprint to make the context as clear as possible. 
 
 6. Start executing each small step. 
-    The prompt should be: The blueprint and plan can be find in Desin1. Use the UTT principle to implement the code. 
+    The prompt should be: The blueprint and plan can be find in Design. Use the UTT principle to implement the code. 
     Remember to align the code style, 
     UTT reqrier that Coverage ≥ 80%, Include positive, negative, and abnormal inputs ,Do not rely on external state or real services;
     delete duplicate code and functions, do not add extra features, functions or documents, 
