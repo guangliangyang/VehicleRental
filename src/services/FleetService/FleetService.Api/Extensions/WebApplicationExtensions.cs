@@ -1,5 +1,7 @@
+using FleetService.Api.Services;
 using FleetService.Application;
 using FleetService.Domain;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace FleetService.Api.Extensions;
@@ -34,13 +36,31 @@ public static class WebApplicationExtensions
     {
         app.MapGet("/vehicles/nearby", GetNearbyVehicles)
             .WithName("GetNearbyVehicles")
-            .WithOpenApi();
+            .WithOpenApi()
+            .RequireAuthorization();
 
         app.MapPut("/vehicles/{vehicleId}/status", UpdateVehicleStatus)
             .WithName("UpdateVehicleStatus")
-            .WithOpenApi();
+            .WithOpenApi()
+            .RequireAuthorization();
 
-        // Health check endpoint for Docker/Kubernetes
+        // User-specific vehicle endpoints
+        app.MapGet("/vehicles/user", GetUserVehicles)
+            .WithName("GetUserVehicles")
+            .WithOpenApi()
+            .RequireAuthorization();
+
+        app.MapPost("/vehicles/{vehicleId}/rent", RentVehicle)
+            .WithName("RentVehicle")
+            .WithOpenApi()
+            .RequireAuthorization();
+
+        app.MapPost("/vehicles/{vehicleId}/return", ReturnVehicle)
+            .WithName("ReturnVehicle")
+            .WithOpenApi()
+            .RequireAuthorization();
+
+        // Health check endpoint for Docker/Kubernetes (no auth required)
         app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))
             .WithName("HealthCheck")
             .WithOpenApi();
@@ -64,12 +84,19 @@ public static class WebApplicationExtensions
     /// <summary>
     /// Gets nearby vehicles within specified radius
     /// </summary>
-    private static async Task<Results<Ok<IReadOnlyList<VehicleSummaryDto>>, BadRequest<ApiError>>> GetNearbyVehicles(
+    private static async Task<Results<Ok<IReadOnlyList<VehicleSummaryDto>>, BadRequest<ApiError>, UnauthorizedHttpResult>> GetNearbyVehicles(
         double latitude,
         double longitude,
         double? radius,
-        IVehicleQueryService queryService)
+        IVehicleQueryService queryService,
+        IUserContextService userContextService)
     {
+        var userIdResult = userContextService.GetUserId();
+        if (userIdResult.IsFailure)
+        {
+            return TypedResults.Unauthorized();
+        }
+
         var query = new NearbyVehiclesQuery(latitude, longitude, radius.GetValueOrDefault(5));
         var result = await queryService.GetNearbyVehiclesAsync(query);
 
@@ -81,11 +108,18 @@ public static class WebApplicationExtensions
     /// <summary>
     /// Updates vehicle status with optimistic concurrency control
     /// </summary>
-    private static async Task<Results<Ok<ApiSuccess>, BadRequest<ApiError>, Conflict<ConcurrencyConflictError>>> UpdateVehicleStatus(
+    private static async Task<Results<Ok<ApiSuccess>, BadRequest<ApiError>, Conflict<ConcurrencyConflictError>, UnauthorizedHttpResult>> UpdateVehicleStatus(
         string vehicleId,
         UpdateVehicleStatusRequest request,
-        IVehicleCommandService commandService)
+        IVehicleCommandService commandService,
+        IUserContextService userContextService)
     {
+        var userIdResult = userContextService.GetUserId();
+        if (userIdResult.IsFailure)
+        {
+            return TypedResults.Unauthorized();
+        }
+
         var result = await commandService.UpdateVehicleStatusAsync(vehicleId, request.ExpectedCurrentStatus, request.NewStatus);
 
         if (result.IsSuccess)
@@ -119,6 +153,68 @@ public static class WebApplicationExtensions
         }
 
         return TypedResults.BadRequest(new ApiError(result.Error?.Code ?? "Unknown", result.Error?.Message ?? "Unknown error."));
+    }
+
+    /// <summary>
+    /// Gets vehicles rented by the current user
+    /// </summary>
+    private static async Task<Results<Ok<IReadOnlyList<VehicleSummaryDto>>, BadRequest<ApiError>, UnauthorizedHttpResult>> GetUserVehicles(
+        IVehicleQueryService queryService,
+        IUserContextService userContextService)
+    {
+        var userIdResult = userContextService.GetUserId();
+        if (userIdResult.IsFailure)
+        {
+            return TypedResults.Unauthorized();
+        }
+
+        var result = await queryService.GetUserVehiclesAsync(userIdResult.Value!);
+
+        return result.IsSuccess && result.Value is not null
+            ? TypedResults.Ok(result.Value)
+            : TypedResults.BadRequest(new ApiError(result.Error?.Code ?? "Unknown", result.Error?.Message ?? "Unknown error."));
+    }
+
+    /// <summary>
+    /// Rents a vehicle for the current user
+    /// </summary>
+    private static async Task<Results<Ok<ApiSuccess>, BadRequest<ApiError>, UnauthorizedHttpResult>> RentVehicle(
+        string vehicleId,
+        IVehicleCommandService commandService,
+        IUserContextService userContextService)
+    {
+        var userIdResult = userContextService.GetUserId();
+        if (userIdResult.IsFailure)
+        {
+            return TypedResults.Unauthorized();
+        }
+
+        var result = await commandService.RentVehicleAsync(vehicleId, userIdResult.Value!);
+
+        return result.IsSuccess
+            ? TypedResults.Ok(new ApiSuccess($"Vehicle {vehicleId} rented successfully"))
+            : TypedResults.BadRequest(new ApiError(result.Error?.Code ?? "Unknown", result.Error?.Message ?? "Unknown error."));
+    }
+
+    /// <summary>
+    /// Returns a vehicle from the current user
+    /// </summary>
+    private static async Task<Results<Ok<ApiSuccess>, BadRequest<ApiError>, UnauthorizedHttpResult>> ReturnVehicle(
+        string vehicleId,
+        IVehicleCommandService commandService,
+        IUserContextService userContextService)
+    {
+        var userIdResult = userContextService.GetUserId();
+        if (userIdResult.IsFailure)
+        {
+            return TypedResults.Unauthorized();
+        }
+
+        var result = await commandService.ReturnVehicleAsync(vehicleId, userIdResult.Value!);
+
+        return result.IsSuccess
+            ? TypedResults.Ok(new ApiSuccess($"Vehicle {vehicleId} returned successfully"))
+            : TypedResults.BadRequest(new ApiError(result.Error?.Code ?? "Unknown", result.Error?.Message ?? "Unknown error."));
     }
 
 }

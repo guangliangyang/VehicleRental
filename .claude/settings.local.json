@@ -4,7 +4,14 @@
       "Bash(git checkout:*)",
       "Bash(npm test:*)",
       "Bash(npm run lint)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet test:*)",
+      "Bash(chmod:*)",
+      "Bash(./scripts/build.sh:*)",
+      "Bash(npm view:*)",
+      "Bash(npm cache clean:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

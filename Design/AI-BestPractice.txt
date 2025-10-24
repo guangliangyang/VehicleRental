@@ -30,6 +30,7 @@ best practice for using AI assistants in programming.
     delete obsolete functions or classes or configurations and documents. 
     
     After AI generates the code, run UT, code linters, and verify whether this step is completed. 
+    and update the plan file, set the sub step is fininshed.
 
 7. When all small steps are completed, 
     align the code style, delete duplicate code and functions, do not add extra features, functions or documents, 

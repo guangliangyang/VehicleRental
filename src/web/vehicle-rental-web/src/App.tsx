@@ -5,12 +5,16 @@ import { VehicleList } from './components/VehicleList';
 import { FilterPanel } from './components/FilterPanel';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useVehicles } from './hooks/useVehicles';
+import { useAuthenticatedApi } from './hooks/useAuthenticatedApi';
 import { AuthProvider, AuthButton } from './auth';
 
 const AppContent: React.FC = () => {
   const [radius, setRadius] = useState<number>(5);
   const [statusFilter, setStatusFilter] = useState<string[]>(['Available', 'Rented', 'Maintenance','OutOfService']);
   const [showList, setShowList] = useState<boolean>(false);
+
+  // Initialize authenticated API
+  useAuthenticatedApi();
 
   const { location, error: locationError, loading: locationLoading, getCurrentLocation } = useGeolocation();
   const {

@@ -1,4 +1,5 @@
 using FleetService.Api.Configuration;
+using FleetService.Api.Services;
 using FleetService.Application;
 using FleetService.Application.Configuration;
 using FleetService.Application.Events;
@@ -7,9 +8,8 @@ using FleetService.Domain.Events;
 using FleetService.Infrastructure.Events;
 using FleetService.Infrastructure.Repositories;
 using FleetService.Infrastructure.Services;
-using Microsoft.Azure.Cosmos;
-using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
 using Microsoft.Identity.Web;
 
 namespace FleetService.Api.Extensions;
@@ -64,6 +64,10 @@ public static class ServiceCollectionExtensions
                 policy.RequireAuthenticatedUser()
                       .RequireClaim("roles", "VehicleAdmin"));
         });
+
+        // Register HTTP Context Accessor and User Context Service
+        services.AddHttpContextAccessor();
+        services.AddScoped<IUserContextService, UserContextService>();
 
         return services;
     }

@@ -1,17 +1,6 @@
 import axios from 'axios';
+import { httpClient } from './httpClient';
 import { VehicleSummaryDto, NearbyVehiclesQuery, ApiError, VehicleStatus, ConcurrencyConflictError, VehicleConcurrencyError } from '../types/vehicle';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL;
-const API_KEY = process.env.REACT_APP_API_KEY;
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-    ...(API_KEY && { 'Ocp-Apim-Subscription-Key': API_KEY })
-  }
-});
 
 export class VehicleService {
 
@@ -23,8 +12,7 @@ export class VehicleService {
         radius: query.radius || 5
       };
 
-      const response = await api.get<VehicleSummaryDto[]>('/vehicles/nearby', { params });
-      return response.data;
+      return await httpClient.get<VehicleSummaryDto[]>('/vehicles/nearby', { params });
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.data) {
         const apiError = error.response.data as ApiError;
@@ -48,7 +36,7 @@ export class VehicleService {
         [VehicleStatus.OutOfService]: 4
       };
 
-      await api.put(`/vehicles/${vehicleId}/status`, {
+      await httpClient.put(`/vehicles/${vehicleId}/status`, {
         expectedCurrentStatus: statusMap[expectedCurrentStatus],
         newStatus: statusMap[newStatus]
       });
@@ -84,6 +72,51 @@ export class VehicleService {
         throw new Error(`${apiError.code}: ${apiError.message}`);
       }
       throw new Error('Failed to update vehicle status');
+    }
+  }
+
+  /**
+   * Get vehicles rented by the current authenticated user
+   */
+  static async getUserVehicles(): Promise<VehicleSummaryDto[]> {
+    try {
+      return await httpClient.get<VehicleSummaryDto[]>('/vehicles/user');
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.data) {
+        const apiError = error.response.data as ApiError;
+        throw new Error(`${apiError.code}: ${apiError.message}`);
+      }
+      throw new Error('Failed to fetch user vehicles');
+    }
+  }
+
+  /**
+   * Rent a vehicle for the current authenticated user
+   */
+  static async rentVehicle(vehicleId: string): Promise<void> {
+    try {
+      await httpClient.post(`/vehicles/${vehicleId}/rent`);
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.data) {
+        const apiError = error.response.data as ApiError;
+        throw new Error(`${apiError.code}: ${apiError.message}`);
+      }
+      throw new Error('Failed to rent vehicle');
+    }
+  }
+
+  /**
+   * Return a vehicle from the current authenticated user
+   */
+  static async returnVehicle(vehicleId: string): Promise<void> {
+    try {
+      await httpClient.post(`/vehicles/${vehicleId}/return`);
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.data) {
+        const apiError = error.response.data as ApiError;
+        throw new Error(`${apiError.code}: ${apiError.message}`);
+      }
+      throw new Error('Failed to return vehicle');
     }
   }
 }
