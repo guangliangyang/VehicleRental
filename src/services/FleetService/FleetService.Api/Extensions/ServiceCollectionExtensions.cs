@@ -1,3 +1,4 @@
+using FleetService.Api.Configuration;
 using FleetService.Application;
 using FleetService.Application.Configuration;
 using FleetService.Application.Events;
@@ -8,18 +9,24 @@ using FleetService.Infrastructure.Repositories;
 using FleetService.Infrastructure.Services;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Identity.Web;
 
 namespace FleetService.Api.Extensions;
 
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Configures API-related services including Swagger and CORS
+    /// Configures API-related services including Swagger, CORS, and Authentication
     /// </summary>
-    public static IServiceCollection AddApiServices(this IServiceCollection services)
+    public static IServiceCollection AddApiServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
+
+        // Configure and validate Azure AD options
+        services.Configure<AzureAdOptions>(configuration.GetSection(AzureAdOptions.SectionName));
+        services.AddSingleton<IValidateOptions<AzureAdOptions>, ValidateAzureAdOptions>();
 
         // Add CORS for frontend access
         services.AddCors(options =>
@@ -33,8 +40,29 @@ public static class ServiceCollectionExtensions
                 )
                 .SetIsOriginAllowedToAllowWildcardSubdomains()
                 .AllowAnyHeader()
-                .AllowAnyMethod();
+                .AllowAnyMethod()
+                .AllowCredentials();
             });
+        });
+
+        // Configure JWT Authentication with Azure AD
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddMicrosoftIdentityWebApi(configuration.GetSection(AzureAdOptions.SectionName));
+
+        // Configure authorization policies
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy("VehicleRead", policy =>
+                policy.RequireAuthenticatedUser()
+                      .RequireClaim("scp", "Vehicle.Read"));
+
+            options.AddPolicy("VehicleWrite", policy =>
+                policy.RequireAuthenticatedUser()
+                      .RequireClaim("scp", "Vehicle.Write"));
+
+            options.AddPolicy("VehicleAdmin", policy =>
+                policy.RequireAuthenticatedUser()
+                      .RequireClaim("roles", "VehicleAdmin"));
         });
 
         return services;

@@ -20,6 +20,10 @@ public static class WebApplicationExtensions
             app.UseSwaggerUI();
         }
 
+        // Authentication and Authorization middleware
+        app.UseAuthentication();
+        app.UseAuthorization();
+
         return app;
     }
 

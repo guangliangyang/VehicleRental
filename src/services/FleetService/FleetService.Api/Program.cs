@@ -9,7 +9,7 @@ if (File.Exists(".env"))
 var builder = WebApplication.CreateBuilder(args);
 
 // Configure services
-builder.Services.AddApiServices();
+builder.Services.AddApiServices(builder.Configuration);
 builder.Services.AddCosmosServices(builder.Configuration);
 builder.Services.AddDomainServices();
 
