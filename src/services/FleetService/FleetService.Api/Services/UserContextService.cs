@@ -1,10 +1,10 @@
 using System.Security.Claims;
-using VehicleRentalSystem.SharedKernel;
 
 namespace FleetService.Api.Services;
 
 /// <summary>
-/// Service for extracting user context from JWT claims in HTTP requests
+/// Service for extracting user context from JWT claims in HTTP requests.
+/// Assumes user is already authenticated via [Authorize] attribute.
 /// </summary>
 public sealed class UserContextService : IUserContextService
 {
@@ -15,12 +15,14 @@ public sealed class UserContextService : IUserContextService
         _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
     }
 
-    public Result<string> GetUserId()
+    public string GetUserId()
     {
-        var httpContext = _httpContextAccessor.HttpContext;
-        if (httpContext?.User?.Identity?.IsAuthenticated != true)
+        var httpContext = _httpContextAccessor.HttpContext
+            ?? throw new InvalidOperationException("HTTP context is not available");
+
+        if (httpContext.User?.Identity?.IsAuthenticated != true)
         {
-            return Result<string>.Failure(new Error("User.NotAuthenticated", "User is not authenticated"));
+            throw new UnauthorizedAccessException("User is not authenticated");
         }
 
         // Try different claim types for user ID (Azure AD uses different claim names)
@@ -30,18 +32,20 @@ public sealed class UserContextService : IUserContextService
 
         if (string.IsNullOrWhiteSpace(userId))
         {
-            return Result<string>.Failure(new Error("User.IdNotFound", "User ID not found in token claims"));
+            throw new InvalidOperationException("User ID not found in token claims");
         }
 
-        return Result<string>.Success(userId);
+        return userId;
     }
 
-    public Result<string> GetUserEmail()
+    public string GetUserEmail()
     {
-        var httpContext = _httpContextAccessor.HttpContext;
-        if (httpContext?.User?.Identity?.IsAuthenticated != true)
+        var httpContext = _httpContextAccessor.HttpContext
+            ?? throw new InvalidOperationException("HTTP context is not available");
+
+        if (httpContext.User?.Identity?.IsAuthenticated != true)
         {
-            return Result<string>.Failure(new Error("User.NotAuthenticated", "User is not authenticated"));
+            throw new UnauthorizedAccessException("User is not authenticated");
         }
 
         var email = httpContext.User.FindFirst(ClaimTypes.Email)?.Value
@@ -50,18 +54,20 @@ public sealed class UserContextService : IUserContextService
 
         if (string.IsNullOrWhiteSpace(email))
         {
-            return Result<string>.Failure(new Error("User.EmailNotFound", "User email not found in token claims"));
+            throw new InvalidOperationException("User email not found in token claims");
         }
 
-        return Result<string>.Success(email);
+        return email;
     }
 
-    public Result<string> GetUserName()
+    public string GetUserName()
     {
-        var httpContext = _httpContextAccessor.HttpContext;
-        if (httpContext?.User?.Identity?.IsAuthenticated != true)
+        var httpContext = _httpContextAccessor.HttpContext
+            ?? throw new InvalidOperationException("HTTP context is not available");
+
+        if (httpContext.User?.Identity?.IsAuthenticated != true)
         {
-            return Result<string>.Failure(new Error("User.NotAuthenticated", "User is not authenticated"));
+            throw new UnauthorizedAccessException("User is not authenticated");
         }
 
         var name = httpContext.User.FindFirst(ClaimTypes.Name)?.Value
@@ -70,10 +76,10 @@ public sealed class UserContextService : IUserContextService
 
         if (string.IsNullOrWhiteSpace(name))
         {
-            return Result<string>.Failure(new Error("User.NameNotFound", "User name not found in token claims"));
+            throw new InvalidOperationException("User name not found in token claims");
         }
 
-        return Result<string>.Success(name);
+        return name;
     }
 
     public bool IsAuthenticated()

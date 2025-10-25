@@ -35,12 +35,7 @@ public class VehiclesController : ControllerBase
         [FromQuery] double longitude,
         [FromQuery] double? radius = 5)
     {
-        var userIdResult = _userContextService.GetUserId();
-        if (userIdResult.IsFailure)
-        {
-            return Unauthorized();
-        }
-
+        // User is already authenticated via [Authorize] attribute
         var query = new NearbyVehiclesQuery(latitude, longitude, radius.GetValueOrDefault(5));
         var result = await _queryService.GetNearbyVehiclesAsync(query);
 
@@ -57,12 +52,7 @@ public class VehiclesController : ControllerBase
         string vehicleId,
         [FromBody] UpdateVehicleStatusRequest request)
     {
-        var userIdResult = _userContextService.GetUserId();
-        if (userIdResult.IsFailure)
-        {
-            return Unauthorized();
-        }
-
+        // User is already authenticated via [Authorize] attribute
         var result = await _commandService.UpdateVehicleStatusAsync(vehicleId, request.ExpectedCurrentStatus, request.NewStatus);
 
         if (result.IsSuccess)
@@ -104,13 +94,9 @@ public class VehiclesController : ControllerBase
     [HttpGet("user")]
     public async Task<ActionResult<IReadOnlyList<VehicleSummaryDto>>> GetUserVehicles()
     {
-        var userIdResult = _userContextService.GetUserId();
-        if (userIdResult.IsFailure)
-        {
-            return Unauthorized();
-        }
-
-        var result = await _queryService.GetUserVehiclesAsync(userIdResult.Value!);
+        // User is already authenticated via [Authorize] attribute
+        var userId = _userContextService.GetUserId();
+        var result = await _queryService.GetUserVehiclesAsync(userId);
 
         return result.IsSuccess && result.Value is not null
             ? Ok(result.Value)
@@ -123,13 +109,9 @@ public class VehiclesController : ControllerBase
     [HttpPost("{vehicleId}/rent")]
     public async Task<ActionResult<ApiSuccess>> RentVehicle(string vehicleId)
     {
-        var userIdResult = _userContextService.GetUserId();
-        if (userIdResult.IsFailure)
-        {
-            return Unauthorized();
-        }
-
-        var result = await _commandService.RentVehicleAsync(vehicleId, userIdResult.Value!);
+        // User is already authenticated via [Authorize] attribute
+        var userId = _userContextService.GetUserId();
+        var result = await _commandService.RentVehicleAsync(vehicleId, userId);
 
         return result.IsSuccess
             ? Ok(new ApiSuccess($"Vehicle {vehicleId} rented successfully"))
@@ -142,13 +124,9 @@ public class VehiclesController : ControllerBase
     [HttpPost("{vehicleId}/return")]
     public async Task<ActionResult<ApiSuccess>> ReturnVehicle(string vehicleId)
     {
-        var userIdResult = _userContextService.GetUserId();
-        if (userIdResult.IsFailure)
-        {
-            return Unauthorized();
-        }
-
-        var result = await _commandService.ReturnVehicleAsync(vehicleId, userIdResult.Value!);
+        // User is already authenticated via [Authorize] attribute
+        var userId = _userContextService.GetUserId();
+        var result = await _commandService.ReturnVehicleAsync(vehicleId, userId);
 
         return result.IsSuccess
             ? Ok(new ApiSuccess($"Vehicle {vehicleId} returned successfully"))
