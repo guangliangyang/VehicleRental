@@ -11,26 +11,41 @@ using FleetService.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.Identity.Web;
-using System.IdentityModel.Tokens.Jwt;
 
 namespace FleetService.Api.Extensions;
 
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Configures API-related services including Swagger, CORS, and Authentication
+    /// Configures all API-related services
     /// </summary>
     public static IServiceCollection AddApiServices(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddWebApiServices();
+        services.AddCorsServices();
+        services.AddAuthenticationServices(configuration);
+        services.AddUserContextServices();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Configures Web API controllers and documentation
+    /// </summary>
+    private static IServiceCollection AddWebApiServices(this IServiceCollection services)
     {
         services.AddControllers();
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
 
-        // Configure and validate Azure AD options
-        services.Configure<AzureAdOptions>(configuration.GetSection(AzureAdOptions.SectionName));
-        services.AddSingleton<IValidateOptions<AzureAdOptions>, ValidateAzureAdOptions>();
+        return services;
+    }
 
-        // Add CORS for frontend access
+    /// <summary>
+    /// Configures CORS policies for frontend access
+    /// </summary>
+    private static IServiceCollection AddCorsServices(this IServiceCollection services)
+    {
         services.AddCors(options =>
         {
             options.AddPolicy("AllowFrontend", policy =>
@@ -47,74 +62,41 @@ public static class ServiceCollectionExtensions
             });
         });
 
+        return services;
+    }
+
+    /// <summary>
+    /// Configures Azure AD authentication and JWT handling
+    /// </summary>
+    private static IServiceCollection AddAuthenticationServices(this IServiceCollection services, IConfiguration configuration)
+    {
+        // Configure and validate Azure AD options
+        services.Configure<AzureAdOptions>(configuration.GetSection(AzureAdOptions.SectionName));
+        services.AddSingleton<IValidateOptions<AzureAdOptions>, ValidateAzureAdOptions>();
+
         // Configure JWT Authentication with Azure AD
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddMicrosoftIdentityWebApi(configuration.GetSection(AzureAdOptions.SectionName))
             .EnableTokenAcquisitionToCallDownstreamApi()
             .AddInMemoryTokenCaches();
 
-        // Add custom JWT logging for debugging
+        // Add custom JWT event handling for debugging
         services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
         {
-            options.Events = new JwtBearerEvents
-            {
-                OnTokenValidated = context =>
-                {
-                    var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-                    var token = context.SecurityToken as System.IdentityModel.Tokens.Jwt.JwtSecurityToken;
-
-                    if (token != null)
-                    {
-                        logger.LogInformation("JWT Token validated successfully:");
-                        logger.LogInformation("  Issuer: {Issuer}", token.Issuer);
-                        logger.LogInformation("  Audience: {Audience}", string.Join(", ", token.Audiences));
-                        logger.LogInformation("  Subject: {Subject}", token.Subject);
-                        logger.LogInformation("  KeyId: {KeyId}", token.Header.Kid);
-                        logger.LogInformation("  Claims: {Claims}",
-                            string.Join(", ", token.Claims.Select(c => $"{c.Type}={c.Value}")));
-                    }
-
-                    return Task.CompletedTask;
-                },
-                OnAuthenticationFailed = context =>
-                {
-                    var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-                    logger.LogError(context.Exception, "JWT Authentication failed: {Error}", context.Exception.Message);
-
-                    // Try to parse the token to see what's wrong
-                    var authHeader = context.Request.Headers.Authorization.FirstOrDefault();
-                    if (authHeader?.StartsWith("Bearer ") == true)
-                    {
-                        var tokenString = authHeader.Substring(7);
-                        try
-                        {
-                            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
-                            var token = handler.ReadJwtToken(tokenString);
-
-                            logger.LogError("Failed token details:");
-                            logger.LogError("  Issuer: {Issuer}", token.Issuer);
-                            logger.LogError("  Audience: {Audience}", string.Join(", ", token.Audiences));
-                            logger.LogError("  Subject: {Subject}", token.Subject);
-                            logger.LogError("  KeyId: {KeyId}", token.Header.Kid);
-                            logger.LogError("  Expiry: {Expiry}", token.ValidTo);
-                            logger.LogError("  Claims: {Claims}",
-                                string.Join(", ", token.Claims.Select(c => $"{c.Type}={c.Value}")));
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.LogError(ex, "Could not parse JWT token for debugging");
-                        }
-                    }
-
-                    return Task.CompletedTask;
-                }
-            };
+            options.Events = JwtBearerEventsFactory.CreateEvents();
         });
 
-        // Configure authorization policies (simplified for initial testing)
+        // Configure authorization policies
         services.AddAuthorization();
 
-        // Register HTTP Context Accessor and User Context Service
+        return services;
+    }
+
+    /// <summary>
+    /// Configures user context services
+    /// </summary>
+    private static IServiceCollection AddUserContextServices(this IServiceCollection services)
+    {
         services.AddHttpContextAccessor();
         services.AddScoped<IUserContextService, UserContextService>();
 
