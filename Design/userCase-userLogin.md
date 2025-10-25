@@ -7,7 +7,7 @@ The Vehicle Rental System currently allows anonymous access to view vehicles and
 - **Frontend**: React 19.2.0 + TypeScript SPA
 - **Backend**: .NET 8 Clean Architecture with Fleet Service API
 - **Database**: Azure Cosmos DB for vehicle data
-- **Real-time**: SignalR for live vehicle updates
+- **Real-time**: Polling for live vehicle updates
 - **Infrastructure**: Azure services with Key Vault integration
 
 ## **Detailed Requirements**
@@ -254,15 +254,6 @@ public void ConfigureServices(IServiceCollection services)
 }
 ```
 
-### **SignalR Integration**
-```typescript
-// Authenticated SignalR connection
-const connection = new HubConnectionBuilder()
-  .withUrl('/hubs/vehicles', {
-    accessTokenFactory: () => getAccessToken()
-  })
-  .build();
-```
 
 ## **Testing Scenarios**
 

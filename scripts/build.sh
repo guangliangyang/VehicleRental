@@ -106,18 +106,11 @@ elif TSC_COMPILE_ON_ERROR=true DISABLE_ESLINT_PLUGIN=true NODE_OPTIONS="--openss
 else
     print_error "❌ React build failed"
     print_error ""
-    print_error "🔧 Troubleshooting steps:"
-    if [ "$NODE_VERSION" -gt 18 ]; then
-        print_error "  1. 🔴 RECOMMENDED: Use Node.js 18: nvm install 18 && nvm use 18"
-    fi
-    print_error "  2. Clear all caches: npm cache clean --force && rm -rf node_modules package-lock.json"
-    print_error "  3. Fresh install: npm install --legacy-peer-deps"
-    print_error "  4. Force build: DISABLE_ESLINT_PLUGIN=true NODE_OPTIONS=\"--openssl-legacy-provider\" npm run build"
-    print_error "  5. Skip TypeScript: TSC_COMPILE_ON_ERROR=true npm run build"
-    print_error ""
-    print_warning "⚠️ The frontend build is failing due to Node.js version incompatibility."
-    print_warning "   This project was built with Node 16-18, but you're using Node $NODE_VERSION."
-    print_warning "   For the best experience, please use Node.js 18."
+    print_error "🔧 Additional troubleshooting for Node $NODE_VERSION:"
+    print_error "  1. Clear all caches: npm cache clean --force && rm -rf node_modules package-lock.json"
+    print_error "  2. Fresh install: npm install --legacy-peer-deps"
+    print_error "  3. Force build: DISABLE_ESLINT_PLUGIN=true NODE_OPTIONS=\"--openssl-legacy-provider\" npm run build"
+    print_error "  4. Skip TypeScript: TSC_COMPILE_ON_ERROR=true npm run build"
     exit 1
 fi
 

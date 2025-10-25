@@ -125,7 +125,6 @@ The application automatically retrieves secrets from Key Vault using:
 
 Before deployment, ensure these services are available:
 - **Azure Cosmos DB** (SQL API with geo-spatial indexing)
-- **Azure SignalR Service** (optional, for real-time features)
 
 ## Verification
 

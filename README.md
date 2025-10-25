@@ -35,8 +35,8 @@ dotnet run --project src/services/VehicleSimulator
 │   React SPA     │────│   .NET 8 API    │────│   Azure Cloud   │
 │                 │    │                  │    │                 │
 │ • Vehicle Map   │    │ • Clean Arch     │    │ • Cosmos DB     │
-│ • Real-time UI  │    │ • DDD Patterns   │    │ • SignalR       │
-│ • SignalR Hub   │    │ • Result Pattern │    │ • Key Vault     │
+│ • Real-time UI  │    │ • DDD Patterns   │    │ • IoT Hub       │
+│ • Live Updates  │    │ • Result Pattern │    │ • Key Vault     │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
 ```
 
@@ -44,7 +44,7 @@ dotnet run --project src/services/VehicleSimulator
 ```
 Vehicle TBOX → IoT Hub → Event Hubs → Stream Analytics → Cosmos DB
                                                               ↓
-React Frontend ← SignalR ← Fleet API ← Real-time Updates ←────┘
+React Frontend ← Polling ← Fleet API ← Real-time Updates ←────┘
 ```
 
 ## 🛠️ Technology Stack
@@ -53,14 +53,13 @@ React Frontend ← SignalR ← Fleet API ← Real-time Updates ←────�
 - **Clean Architecture** with Domain-Driven Design
 - **ASP.NET Core** with Minimal APIs
 - **Azure Cosmos DB** for geo-spatial storage
-- **SignalR** for real-time updates
 - **Result Pattern** for robust error handling
 - **xUnit** for comprehensive testing
 
 **Frontend (React)**
 - **React 18** with TypeScript
 - **Real-time map** integration
-- **SignalR client** for live updates
+- **Polling mechanism** for live updates
 - **Responsive design**
 
 **Cloud (Azure)**

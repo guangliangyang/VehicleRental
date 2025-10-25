@@ -11,7 +11,8 @@
       "Bash(./scripts/build.sh:*)",
       "Bash(npm view:*)",
       "Bash(npm cache clean:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(SKIP_PREFLIGHT_CHECK=true TSC_COMPILE_ON_ERROR=true GENERATE_SOURCEMAP=false npm run build)"
     ],
     "deny": [],
     "ask": []

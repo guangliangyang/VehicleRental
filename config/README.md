@@ -12,7 +12,6 @@ This directory contains centralized configuration files for all environments and
 
 ### API Configuration Templates (`api.env.template`)
 - Cosmos DB connection settings templates
-- SignalR service configuration templates
 - Application-specific settings templates
 
 ### Frontend Configuration Templates (`frontend.env.template`)
@@ -38,7 +37,6 @@ cp config/production/frontend.env src/web/vehicle-rental-web/.env.production
 
 All configuration follows this naming convention:
 - `COSMOS_*` - Cosmos DB related settings
-- `SIGNALR_*` - SignalR service settings
 - `REACT_APP_*` - React frontend settings
 - `ASPNETCORE_*` - ASP.NET Core settings
 

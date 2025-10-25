@@ -585,98 +585,6 @@ public class VehiclesController : ControllerBase
 }
 ```
 
-### **Phase 4: SignalR Authentication (Week 4)**
-
-#### **Step 4.1: Update SignalR Hub**
-```csharp
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.SignalR;
-
-[Authorize]
-public class VehiclesHub : Hub
-{
-    public async Task JoinUserGroup()
-    {
-        var userId = GetUserId();
-        await Groups.AddToGroupAsync(Context.ConnectionId, $"User_{userId}");
-    }
-
-    public async Task LeaveUserGroup()
-    {
-        var userId = GetUserId();
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"User_{userId}");
-    }
-
-    private string GetUserId()
-    {
-        return Context.User?.FindFirst("oid")?.Value
-            ?? throw new HubException("User not authenticated");
-    }
-
-    public override async Task OnConnectedAsync()
-    {
-        await JoinUserGroup();
-        await base.OnConnectedAsync();
-    }
-
-    public override async Task OnDisconnectedAsync(Exception? exception)
-    {
-        await LeaveUserGroup();
-        await base.OnDisconnectedAsync(exception);
-    }
-}
-```
-
-#### **Step 4.2: Update Frontend SignalR Connection**
-```typescript
-// src/hooks/useSignalR.ts
-import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
-import { useAuth } from '../auth/AuthContext';
-
-export const useSignalR = () => {
-  const { getAccessToken, isAuthenticated } = useAuth();
-  const [connection, setConnection] = React.useState<HubConnection | null>(null);
-
-  React.useEffect(() => {
-    if (!isAuthenticated) {
-      if (connection) {
-        connection.stop();
-        setConnection(null);
-      }
-      return;
-    }
-
-    const createConnection = async () => {
-      const newConnection = new HubConnectionBuilder()
-        .withUrl(`${process.env.REACT_APP_API_BASE_URL}/hubs/vehicles`, {
-          accessTokenFactory: async () => {
-            const token = await getAccessToken();
-            return token || '';
-          }
-        })
-        .withAutomaticReconnect()
-        .build();
-
-      try {
-        await newConnection.start();
-        setConnection(newConnection);
-      } catch (error) {
-        console.error('SignalR connection failed:', error);
-      }
-    };
-
-    createConnection();
-
-    return () => {
-      if (connection) {
-        connection.stop();
-      }
-    };
-  }, [isAuthenticated, getAccessToken]);
-
-  return connection;
-};
-```
 
 ---
 
@@ -1112,12 +1020,6 @@ public class AuthenticationHealthCheck : IHealthCheck
 - [ ] Test API security
 - [ ] Configure CORS policies
 
-### **Phase 4: SignalR Authentication**
-- [ ] Update SignalR hub with authorization
-- [ ] Implement user groups
-- [ ] Update frontend SignalR connection
-- [ ] Test real-time authentication
-- [ ] Implement connection recovery
 
 ### **Phase 5: Testing & Deployment**
 - [ ] Write unit tests
@@ -1173,8 +1075,6 @@ public class AuthenticationHealthCheck : IHealthCheck
 **Issue**: Claims not available in API
 **Solution**: Verify token audience and scope configuration
 
-**Issue**: SignalR connection failures
-**Solution**: Ensure access token is correctly passed to connection factory
 
 ### **Escalation Procedures**
 1. **Level 1**: Development team reviews logs and configuration

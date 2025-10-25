@@ -25,7 +25,6 @@ const createMsalConfig = (): Configuration => {
         storeAuthStateInCookie: false
       },
       system: {
-        allowNativeBroker: false,
         loggerOptions: {
           loggerCallback: (level: LogLevel, message: string, containsPii: boolean) => {
             if (containsPii) return;

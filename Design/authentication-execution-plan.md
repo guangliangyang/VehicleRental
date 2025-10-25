@@ -21,10 +21,7 @@ This execution plan breaks down the comprehensive authentication solution into s
 ### **Phase 4: Backend Authentication**
 *Duration: 2-3 days*
 
-### **Phase 5: SignalR Integration**
-*Duration: 1-2 days*
-
-### **Phase 6: Testing & Deployment**
+### **Phase 5: Testing & Deployment**
 *Duration: 2-3 days*
 
 ---
@@ -505,70 +502,7 @@ curl -X GET http://localhost:5001/api/vehicles/nearby
 
 ---
 
-## **Phase 5: SignalR Integration**
-
-### **Step 5.1: Add Authentication to SignalR Hub**
-**Duration**: 30 minutes
-**Owner**: Developer
-
-**Tasks:**
-1. Add [Authorize] attribute to VehiclesHub
-2. Implement user group management
-3. Add connection lifecycle handling
-4. Test hub authentication
-
-**Deliverables:**
-- Updated `VehiclesHub` with authentication
-- User group management for personalized updates
-- Connection handling with user context
-
-**Verification Criteria:**
-```bash
-# Test hub requires authentication
-# Unauthenticated connections should be rejected
-```
-
-**Acceptance Test:**
-- [ ] Hub requires authentication for connections
-- [ ] User groups created/managed correctly
-- [ ] Connection lifecycle properly handled
-- [ ] User context available in hub methods
-- [ ] Error handling for authentication failures
-
----
-
-### **Step 5.2: Update Frontend SignalR Connection**
-**Duration**: 30 minutes
-**Owner**: Developer
-
-**Tasks:**
-1. Create authenticated SignalR hook
-2. Implement token provider for connection
-3. Add connection error handling
-4. Test real-time updates
-
-**Deliverables:**
-- `src/hooks/useSignalR.ts` - Authenticated SignalR hook
-- Token provider for SignalR connection
-- Connection error handling
-
-**Verification Criteria:**
-```typescript
-// Test hook provides authenticated connection
-const connection = useSignalR();
-// Connection should include authentication token
-```
-
-**Acceptance Test:**
-- [ ] SignalR connection includes authentication token
-- [ ] Connection establishes successfully when authenticated
-- [ ] Connection fails appropriately when not authenticated
-- [ ] Automatic reconnection works with token refresh
-- [ ] Real-time updates work for authenticated users
-
----
-
-## **Phase 6: Testing & Deployment**
+## **Phase 5: Testing & Deployment**
 
 ### **Step 6.1: Create Unit Tests**
 **Duration**: 2 hours
@@ -608,7 +542,6 @@ npm test -- --coverage
 **Tasks:**
 1. Write API integration tests with authentication
 2. Test authentication middleware
-3. Test SignalR authentication
 4. Create test data and cleanup
 
 **Deliverables:**
@@ -852,11 +785,6 @@ If a phase fails:
 - [ ] User context available
 
 ### **Phase 5 Success**
-- [ ] SignalR requires authentication
-- [ ] Real-time updates for authenticated users
-- [ ] Connection management working
-
-### **Phase 6 Success**
 - [ ] All tests passing
 - [ ] Performance requirements met
 - [ ] Security validation complete
