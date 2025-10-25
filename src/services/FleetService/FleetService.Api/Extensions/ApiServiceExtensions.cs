@@ -1,20 +1,12 @@
 using FleetService.Api.Configuration;
 using FleetService.Api.Services;
-using FleetService.Application;
-using FleetService.Application.Configuration;
-using FleetService.Application.Events;
-using FleetService.Domain;
-using FleetService.Domain.Events;
-using FleetService.Infrastructure.Events;
-using FleetService.Infrastructure.Repositories;
-using FleetService.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.Identity.Web;
 
 namespace FleetService.Api.Extensions;
 
-public static class ServiceCollectionExtensions
+public static class ApiServiceExtensions
 {
     /// <summary>
     /// Configures all API-related services
@@ -99,54 +91,6 @@ public static class ServiceCollectionExtensions
     {
         services.AddHttpContextAccessor();
         services.AddScoped<IUserContextService, UserContextService>();
-
-        return services;
-    }
-
-    /// <summary>
-    /// Configures Cosmos DB services and repository using Key Vault
-    /// </summary>
-    public static IServiceCollection AddCosmosServices(this IServiceCollection services, IConfiguration configuration)
-    {
-        // Configure Cosmos options from configuration (Key Vault URL)
-        services.Configure<CosmosOptions>(options =>
-        {
-            options.KeyVaultUrl = configuration["Cosmos:KeyVaultUrl"] ?? throw new InvalidOperationException("Cosmos:KeyVaultUrl configuration is required");
-        });
-
-        // Register Key Vault service
-        services.AddSingleton<IKeyVaultService>(sp =>
-        {
-            var options = sp.GetRequiredService<IOptions<CosmosOptions>>().Value;
-            var logger = sp.GetRequiredService<ILogger<KeyVaultService>>();
-            return new KeyVaultService(options.KeyVaultUrl, logger);
-        });
-
-        // Register Cosmos repository factory
-        services.AddSingleton<IVehicleRepository>(sp =>
-        {
-            var dispatcher = sp.GetRequiredService<IDomainEventDispatcher>();
-            var keyVaultService = sp.GetRequiredService<IKeyVaultService>();
-            var logger = sp.GetRequiredService<ILogger<CosmosVehicleRepository>>();
-
-            // Create a lazy-initialized repository that loads secrets on first access
-            return new LazyCosmosVehicleRepository(keyVaultService, dispatcher, logger);
-        });
-
-        return services;
-    }
-
-
-    /// <summary>
-    /// Configures domain services including event handling
-    /// </summary>
-    public static IServiceCollection AddDomainServices(this IServiceCollection services)
-    {
-        services.AddSingleton<IDomainEventDispatcher, DomainEventDispatcher>();
-        services.AddScoped<IDomainEventHandler<VehicleStatusChangedDomainEvent>, VehicleDomainEventHandler>();
-        services.AddScoped<IDomainEventHandler<VehicleLocationUpdatedDomainEvent>, VehicleDomainEventHandler>();
-        services.AddScoped<IVehicleQueryService, VehicleQueryService>();
-        services.AddScoped<IVehicleCommandService, VehicleCommandService>();
 
         return services;
     }
