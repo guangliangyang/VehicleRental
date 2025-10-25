@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { httpClient } from './httpClient';
+import { httpClient, anonymousHttpClient } from './httpClient';
 import { VehicleSummaryDto, NearbyVehiclesQuery, ApiError, VehicleStatus, ConcurrencyConflictError, VehicleConcurrencyError } from '../types/vehicle';
 
 export class VehicleService {
@@ -12,7 +12,8 @@ export class VehicleService {
         radius: query.radius || 5
       };
 
-      return await httpClient.get<VehicleSummaryDto[]>('/vehicles/nearby', { params });
+      // Use anonymous client for nearby vehicles (no authentication required)
+      return await anonymousHttpClient.get<VehicleSummaryDto[]>('/vehicles/nearby', { params });
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.data) {
         const apiError = error.response.data as ApiError;

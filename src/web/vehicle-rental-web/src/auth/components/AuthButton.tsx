@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../AuthContext';
+import { getDisplayRole } from '../roleUtils';
 
 export interface AuthButtonProps {
   className?: string;
@@ -7,6 +8,7 @@ export interface AuthButtonProps {
   logoutText?: string;
   loadingText?: string;
   showUserInfo?: boolean;
+  showUserRole?: boolean;
   onLoginSuccess?: () => void;
   onLogoutSuccess?: () => void;
   onError?: (error: string) => void;
@@ -18,6 +20,7 @@ export const AuthButton: React.FC<AuthButtonProps> = ({
   logoutText = 'Sign Out',
   loadingText = 'Loading...',
   showUserInfo = true,
+  showUserRole = true,
   onLoginSuccess,
   onLogoutSuccess,
   onError
@@ -68,12 +71,31 @@ export const AuthButton: React.FC<AuthButtonProps> = ({
     return (
       <div className={`auth-button-container ${className}`} data-testid="auth-button-authenticated">
         {showUserInfo && user && (
-          <span
-            className="auth-button__user-info"
-            data-testid="auth-button-user-info"
-          >
-            Welcome, {user.name}
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: '12px' }}>
+            <span
+              className="auth-button__user-info"
+              data-testid="auth-button-user-info"
+              style={{ fontSize: '14px', fontWeight: 'bold' }}
+            >
+              Welcome, {user.name}
+            </span>
+            {showUserRole && (
+              <span
+                className="auth-button__user-role"
+                data-testid="auth-button-user-role"
+                style={{
+                  fontSize: '12px',
+                  color: '#666',
+                  backgroundColor: '#f8f9fa',
+                  padding: '2px 6px',
+                  borderRadius: '12px',
+                  marginTop: '2px'
+                }}
+              >
+                {getDisplayRole(user)}
+              </span>
+            )}
+          </div>
         )}
         <button
           onClick={handleLogout}

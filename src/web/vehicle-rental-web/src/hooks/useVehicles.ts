@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { VehicleSummaryDto, UserLocation, VehicleStatus, VehicleConcurrencyError } from '../types/vehicle';
+import { VehicleSummaryDto, UserLocation } from '../types/vehicle';
 import { VehicleService } from '../services/vehicleService';
 
 interface UseVehiclesResult {
@@ -7,7 +7,6 @@ interface UseVehiclesResult {
   loading: boolean;
   error: string | null;
   refresh: () => void;
-  updateVehicleStatus: (vehicleId: string, expectedCurrentStatus: VehicleStatus, newStatus: VehicleStatus) => Promise<void>;
   isAutoRefreshEnabled: boolean;
   toggleAutoRefresh: () => void;
 }
@@ -43,49 +42,6 @@ export const useVehicles = (userLocation: UserLocation | null, radius: number = 
     fetchVehicles();
   }, [fetchVehicles]);
 
-  const updateVehicleStatus = useCallback(async (vehicleId: string, expectedCurrentStatus: VehicleStatus, newStatus: VehicleStatus) => {
-    try {
-      setError(null);
-      await VehicleService.updateVehicleStatus(vehicleId, expectedCurrentStatus, newStatus);
-
-      // Update the local state immediately for better UX
-      setVehicles(prevVehicles =>
-        prevVehicles.map(vehicle =>
-          vehicle.vehicleId === vehicleId
-            ? { ...vehicle, status: newStatus }
-            : vehicle
-        )
-      );
-
-      // Refresh data from server after a short delay to get the latest state
-      setTimeout(() => {
-        fetchVehicles();
-      }, 1000);
-    } catch (error) {
-      if (error instanceof VehicleConcurrencyError) {
-        const { actualCurrentStatus } = error;
-
-        // Handle concurrency conflict: Update local state with actual current status
-        setVehicles(prevVehicles =>
-          prevVehicles.map(vehicle =>
-            vehicle.vehicleId === vehicleId
-              ? { ...vehicle, status: actualCurrentStatus }
-              : vehicle
-          )
-        );
-
-        // Re-throw the concurrency error so component can handle it with user-friendly message
-        throw error;
-      }
-
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update vehicle status';
-      setError(errorMessage);
-
-      // Re-fetch to ensure we have the correct state
-      fetchVehicles();
-      throw error; // Re-throw so the component can handle it
-    }
-  }, [fetchVehicles]);
 
   const toggleAutoRefresh = useCallback(() => {
     setIsAutoRefreshEnabled(prev => !prev);
@@ -126,7 +82,6 @@ export const useVehicles = (userLocation: UserLocation | null, radius: number = 
     loading,
     error,
     refresh,
-    updateVehicleStatus,
     isAutoRefreshEnabled,
     toggleAutoRefresh
   };

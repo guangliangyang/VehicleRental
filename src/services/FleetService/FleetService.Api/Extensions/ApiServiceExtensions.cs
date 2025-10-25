@@ -1,3 +1,4 @@
+using FleetService.Api.Authorization;
 using FleetService.Api.Configuration;
 using FleetService.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -79,7 +80,16 @@ public static class ApiServiceExtensions
         });
 
         // Configure authorization policies
-        services.AddAuthorization();
+        services.AddAuthorization(options =>
+        {
+            // Policy for technician-only operations
+            options.AddPolicy(PolicyNames.TechnicianOnly, policy =>
+                policy.RequireRole(Roles.Technician));
+
+            // Policy for authenticated users (both regular users and technicians)
+            options.AddPolicy(PolicyNames.AuthenticatedUser, policy =>
+                policy.RequireRole(Roles.User, Roles.Technician));
+        });
 
         return services;
     }
@@ -91,6 +101,8 @@ public static class ApiServiceExtensions
     {
         services.AddHttpContextAccessor();
         services.AddScoped<IUserContextService, UserContextService>();
+        services.AddScoped<IRoleService, RoleService>();
+        services.AddScoped<IVehicleStatusValidator, VehicleStatusValidator>();
 
         return services;
     }

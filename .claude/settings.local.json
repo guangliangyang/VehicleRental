@@ -15,7 +15,9 @@
       "Bash(SKIP_PREFLIGHT_CHECK=true TSC_COMPILE_ON_ERROR=true GENERATE_SOURCEMAP=false npm run build)",
       "Bash(mkdir:*)",
       "Bash(cp:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(dotnet run:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

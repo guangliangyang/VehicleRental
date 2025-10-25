@@ -115,8 +115,39 @@ class AuthenticatedHttpClient {
   }
 }
 
-// Create and export a singleton instance
+// Create and export a singleton instance for authenticated requests
 export const httpClient = new AuthenticatedHttpClient();
+
+// Create a separate unauthenticated client for anonymous operations
+const unauthenticatedClient = axios.create({
+  baseURL: getEnvironmentConfig().api.baseUrl,
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+export const anonymousHttpClient = {
+  async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    const response = await unauthenticatedClient.get<T>(url, config);
+    return response.data;
+  },
+
+  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+    const response = await unauthenticatedClient.post<T>(url, data, config);
+    return response.data;
+  },
+
+  async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+    const response = await unauthenticatedClient.put<T>(url, data, config);
+    return response.data;
+  },
+
+  async delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    const response = await unauthenticatedClient.delete<T>(url, config);
+    return response.data;
+  }
+};
 
 // Export the class for testing
 export { AuthenticatedHttpClient };

@@ -1,41 +1,46 @@
+using FleetService.Api.Authorization;
 using FleetService.Api.Models;
 using FleetService.Api.Services;
 using FleetService.Application;
 using FleetService.Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VehicleRentalSystem.SharedKernel;
 
 namespace FleetService.Api.Controllers;
 
 [ApiController]
 [Route("vehicles")]
-[Authorize]
 public class VehiclesController : ControllerBase
 {
     private readonly IVehicleQueryService _queryService;
     private readonly IVehicleCommandService _commandService;
     private readonly IUserContextService _userContextService;
+    private readonly IVehicleStatusValidator _statusValidator;
 
     public VehiclesController(
         IVehicleQueryService queryService,
         IVehicleCommandService commandService,
-        IUserContextService userContextService)
+        IUserContextService userContextService,
+        IVehicleStatusValidator statusValidator)
     {
         _queryService = queryService;
         _commandService = commandService;
         _userContextService = userContextService;
+        _statusValidator = statusValidator;
     }
 
     /// <summary>
-    /// Gets nearby vehicles within specified radius
+    /// Gets nearby vehicles within specified radius (Anonymous access allowed)
     /// </summary>
     [HttpGet("nearby")]
+    [AllowAnonymous]
     public async Task<ActionResult<IReadOnlyList<VehicleSummaryDto>>> GetNearbyVehicles(
         [FromQuery] double latitude,
         [FromQuery] double longitude,
         [FromQuery] double? radius = 5)
     {
-        // User is already authenticated via [Authorize] attribute
+        // Anonymous access allowed for nearby vehicle search
         var query = new NearbyVehiclesQuery(latitude, longitude, radius.GetValueOrDefault(5));
         var result = await _queryService.GetNearbyVehiclesAsync(query);
 
@@ -45,14 +50,23 @@ public class VehiclesController : ControllerBase
     }
 
     /// <summary>
-    /// Updates vehicle status with optimistic concurrency control
+    /// Updates vehicle status with optimistic concurrency control (Technician only)
     /// </summary>
     [HttpPut("{vehicleId}/status")]
+    [Authorize(Policy = PolicyNames.TechnicianOnly)]
     public async Task<ActionResult<ApiSuccess>> UpdateVehicleStatus(
         string vehicleId,
         [FromBody] UpdateVehicleStatusRequest request)
     {
-        // User is already authenticated via [Authorize] attribute
+        // Validate status transition based on user role
+        var validationResult = _statusValidator.ValidateStatusTransition(request.ExpectedCurrentStatus, request.NewStatus);
+        if (validationResult.IsFailure)
+        {
+            var error = validationResult.Error ?? new Error("Unknown", "Unknown validation error");
+            return BadRequest(new ApiError(error.Code, error.Message));
+        }
+
+        // Only technicians can update vehicle status to maintenance/out-of-service
         var result = await _commandService.UpdateVehicleStatusAsync(vehicleId, request.ExpectedCurrentStatus, request.NewStatus);
 
         if (result.IsSuccess)
@@ -89,12 +103,13 @@ public class VehiclesController : ControllerBase
     }
 
     /// <summary>
-    /// Gets vehicles rented by the current user
+    /// Gets vehicles rented by the current user (Authenticated users only)
     /// </summary>
     [HttpGet("user")]
+    [Authorize(Policy = PolicyNames.AuthenticatedUser)]
     public async Task<ActionResult<IReadOnlyList<VehicleSummaryDto>>> GetUserVehicles()
     {
-        // User is already authenticated via [Authorize] attribute
+        // Authenticated users can view their rented vehicles
         var userId = _userContextService.GetUserId();
         var result = await _queryService.GetUserVehiclesAsync(userId);
 
@@ -104,12 +119,13 @@ public class VehiclesController : ControllerBase
     }
 
     /// <summary>
-    /// Rents a vehicle for the current user
+    /// Rents a vehicle for the current user (Authenticated users only)
     /// </summary>
     [HttpPost("{vehicleId}/rent")]
+    [Authorize(Policy = PolicyNames.AuthenticatedUser)]
     public async Task<ActionResult<ApiSuccess>> RentVehicle(string vehicleId)
     {
-        // User is already authenticated via [Authorize] attribute
+        // Authenticated users can rent available vehicles
         var userId = _userContextService.GetUserId();
         var result = await _commandService.RentVehicleAsync(vehicleId, userId);
 
@@ -119,12 +135,13 @@ public class VehiclesController : ControllerBase
     }
 
     /// <summary>
-    /// Returns a vehicle from the current user
+    /// Returns a vehicle from the current user (Authenticated users only)
     /// </summary>
     [HttpPost("{vehicleId}/return")]
+    [Authorize(Policy = PolicyNames.AuthenticatedUser)]
     public async Task<ActionResult<ApiSuccess>> ReturnVehicle(string vehicleId)
     {
-        // User is already authenticated via [Authorize] attribute
+        // Authenticated users can return their rented vehicles
         var userId = _userContextService.GetUserId();
         var result = await _commandService.ReturnVehicleAsync(vehicleId, userId);
 

@@ -2,16 +2,22 @@ import React, { useState, useMemo } from 'react';
 import './App.css';
 import { MapView } from './components/MapView';
 import { VehicleList } from './components/VehicleList';
+import { UserVehiclesView } from './components/UserVehiclesView';
 import { FilterPanel } from './components/FilterPanel';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useVehicles } from './hooks/useVehicles';
 import { useAuthenticatedApi } from './hooks/useAuthenticatedApi';
-import { AuthProvider, AuthButton } from './auth';
+import { AuthProvider, AuthButton, useAuth } from './auth';
+import { getUserPermissions, isAuthenticated } from './auth/roleUtils';
+
+type ViewMode = 'map' | 'list' | 'myVehicles';
 
 const AppContent: React.FC = () => {
   const [radius, setRadius] = useState<number>(5);
   const [statusFilter, setStatusFilter] = useState<string[]>(['Available', 'Rented', 'Maintenance','OutOfService']);
-  const [showList, setShowList] = useState<boolean>(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('map');
+  const { user } = useAuth();
+  const permissions = getUserPermissions(user);
 
   // Initialize authenticated API
   useAuthenticatedApi();
@@ -22,7 +28,6 @@ const AppContent: React.FC = () => {
     loading: vehiclesLoading,
     error: vehiclesError,
     refresh,
-    updateVehicleStatus,
     isAutoRefreshEnabled,
     toggleAutoRefresh
   } = useVehicles(location, radius, 30000); // 30 seconds auto refresh
@@ -48,9 +53,6 @@ const AppContent: React.FC = () => {
             <div style={{ textAlign: 'right' }}>
               <AuthButton
                 className="auth-button-header"
-                onLoginSuccess={() => console.log('Login successful')}
-                onLogoutSuccess={() => console.log('Logout successful')}
-                onError={(error) => console.error('Auth error:', error)}
               />
             </div>
           </div>
@@ -100,12 +102,12 @@ const AppContent: React.FC = () => {
         {/* View Toggle */}
         <div style={{ marginBottom: '20px', textAlign: 'center' }}>
           <button
-            onClick={() => setShowList(false)}
+            onClick={() => setViewMode('map')}
             style={{
               padding: '8px 16px',
               marginRight: '8px',
-              backgroundColor: !showList ? '#007bff' : '#e9ecef',
-              color: !showList ? 'white' : '#333',
+              backgroundColor: viewMode === 'map' ? '#007bff' : '#e9ecef',
+              color: viewMode === 'map' ? 'white' : '#333',
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
@@ -114,11 +116,12 @@ const AppContent: React.FC = () => {
             🗺️ Map View
           </button>
           <button
-            onClick={() => setShowList(true)}
+            onClick={() => setViewMode('list')}
             style={{
               padding: '8px 16px',
-              backgroundColor: showList ? '#007bff' : '#e9ecef',
-              color: showList ? 'white' : '#333',
+              marginRight: '8px',
+              backgroundColor: viewMode === 'list' ? '#007bff' : '#e9ecef',
+              color: viewMode === 'list' ? 'white' : '#333',
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
@@ -126,47 +129,87 @@ const AppContent: React.FC = () => {
           >
             📋 List View
           </button>
+          {permissions.canViewOwnVehicles && (
+            <button
+              onClick={() => setViewMode('myVehicles')}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: viewMode === 'myVehicles' ? '#28a745' : '#e9ecef',
+                color: viewMode === 'myVehicles' ? 'white' : '#333',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              🚗 My Vehicles
+            </button>
+          )}
         </div>
 
         {/* Content */}
-        {showList ? (
+        {viewMode === 'list' ? (
           <VehicleList
             vehicles={filteredVehicles}
             loading={vehiclesLoading}
-            onStatusUpdate={updateVehicleStatus}
+            onRefresh={handleRefresh}
+          />
+        ) : viewMode === 'myVehicles' ? (
+          <UserVehiclesView
+            onRefresh={handleRefresh}
           />
         ) : (
           <MapView
             userLocation={location}
             vehicles={filteredVehicles}
             radius={radius}
-            onStatusUpdate={updateVehicleStatus}
           />
         )}
 
         {/* Status Info */}
-        <div style={{
-          marginTop: '20px',
-          padding: '12px',
-          backgroundColor: '#e9ecef',
-          borderRadius: '4px',
-          fontSize: '14px',
-          textAlign: 'center'
-        }}>
-          {location ? (
-            <span>
-              📍 Location: {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)} |
-              🚗 Found {filteredVehicles.length} vehicles within {radius} km
-              {isAutoRefreshEnabled && (
-                <span style={{ marginLeft: '8px', color: '#28a745' }}>
-                  | 🔄 Auto-refresh enabled (30s)
-                </span>
-              )}
-            </span>
-          ) : (
-            <span>📍 Getting your location...</span>
-          )}
-        </div>
+        {viewMode !== 'myVehicles' && (
+          <div style={{
+            marginTop: '20px',
+            padding: '12px',
+            backgroundColor: '#e9ecef',
+            borderRadius: '4px',
+            fontSize: '14px',
+            textAlign: 'center'
+          }}>
+            {location ? (
+              <span>
+                📍 Location: {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)} |
+                🚗 Found {filteredVehicles.length} vehicles within {radius} km
+                {isAutoRefreshEnabled && (
+                  <span style={{ marginLeft: '8px', color: '#28a745' }}>
+                    | 🔄 Auto-refresh enabled (30s)
+                  </span>
+                )}
+              </span>
+            ) : (
+              <span>📍 Getting your location...</span>
+            )}
+          </div>
+        )}
+
+        {/* User Info */}
+        {isAuthenticated(user) && (
+          <div style={{
+            marginTop: '20px',
+            padding: '12px',
+            backgroundColor: '#d4edda',
+            borderRadius: '4px',
+            fontSize: '14px',
+            textAlign: 'center',
+            color: '#155724'
+          }}>
+            👤 Signed in as {user?.name} | Access Level: {permissions.canUpdateVehicleStatus ? 'Technician' : 'User'}
+            {permissions.canUpdateVehicleStatus && (
+              <span style={{ marginLeft: '8px' }}>
+                | 🔧 Can manage maintenance & service status
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
