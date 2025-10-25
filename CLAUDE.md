@@ -22,11 +22,27 @@ dotnet run --project src/services/VehicleSimulator
 # Run all tests
 dotnet test src/services/VehicleRentalSystem.sln
 
-# Run specific test project
-dotnet test src/services/FleetService/FleetService.UnitTests
+# Run specific test project (CORRECT LOCATION)
+dotnet test tests/unit/FleetService.UnitTests
 
 # Run tests with coverage
 dotnet test --collect:"XPlat Code Coverage"
+```
+
+### Test Project Structure (IMPORTANT)
+Tests should ONLY be located in `/tests/` directory, NOT in `/src/`:
+```
+/tests/
+├── unit/
+│   ├── FleetService.UnitTests/           ✅ CORRECT
+│   └── VehicleRentalSystem.SharedKernel.Tests/
+└── integration/
+    └── FleetService.IntegrationTests/
+
+/src/services/FleetService/
+├── FleetService.Api/                     ✅ Source code only
+├── FleetService.Domain/
+└── FleetService.UnitTests/              ❌ WRONG LOCATION - DO NOT CREATE
 ```
 
 ## Architecture Overview

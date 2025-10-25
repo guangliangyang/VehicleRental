@@ -12,7 +12,10 @@
       "Bash(npm view:*)",
       "Bash(npm cache clean:*)",
       "Bash(npm install:*)",
-      "Bash(SKIP_PREFLIGHT_CHECK=true TSC_COMPILE_ON_ERROR=true GENERATE_SOURCEMAP=false npm run build)"
+      "Bash(SKIP_PREFLIGHT_CHECK=true TSC_COMPILE_ON_ERROR=true GENERATE_SOURCEMAP=false npm run build)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []
