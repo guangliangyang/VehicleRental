@@ -19,7 +19,7 @@ var app = builder.Build();
 app.ConfigureMiddleware();
 
 // Configure routing
-app.MapVehicleEndpoints();
+app.MapControllers();
 
 // Initialize services
 await app.InitializeServicesAsync();
