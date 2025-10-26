@@ -1,0 +1,382 @@
+/* ErrorBoundary.module.css - Error boundary component styles */
+
+.errorContainer {
+  padding: 24px;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+  margin: 16px;
+  text-align: center;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.errorIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.errorTitle {
+  color: #721c24;
+  margin-bottom: 12px;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.errorMessage {
+  color: #721c24;
+  margin-bottom: 20px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.buttonContainer {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.retryButton {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.retryButton:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.retryButton:focus-visible {
+  outline: 2px solid #0056b3;
+  outline-offset: 2px;
+}
+
+.refreshButton {
+  padding: 10px 20px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.refreshButton:hover:not(:disabled) {
+  background-color: #545b62;
+}
+
+.refreshButton:focus-visible {
+  outline: 2px solid #545b62;
+  outline-offset: 2px;
+}
+
+.errorDetails {
+  margin-top: 20px;
+  text-align: left;
+  background-color: #f1f3f4;
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  border: 1px solid #d1d3d4;
+}
+
+.errorDetailsSummary {
+  cursor: pointer;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #495057;
+}
+
+.errorDetailsSummary:hover {
+  color: #212529;
+}
+
+.errorDetailsSection {
+  margin-bottom: 12px;
+}
+
+.errorDetailsLabel {
+  font-weight: bold;
+  color: #495057;
+  margin-bottom: 4px;
+}
+
+.errorDetailsCode {
+  font-size: 12px;
+  background-color: #ffffff;
+  padding: 8px;
+  border-radius: 4px;
+  overflow: auto;
+  max-height: 200px;
+  border: 1px solid #dee2e6;
+  font-family: 'Courier New', Consolas, monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Fallback component styles */
+.fallbackContainer {
+  padding: 24px;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+  margin: 16px;
+  text-align: center;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.fallbackTitle {
+  color: #721c24;
+  margin-bottom: 12px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.fallbackMessage {
+  color: #721c24;
+  margin-bottom: 16px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.fallbackButton {
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.fallbackButton:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.fallbackButton:focus-visible {
+  outline: 2px solid #0056b3;
+  outline-offset: 2px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .errorContainer {
+    margin: 8px;
+    padding: 16px;
+  }
+
+  .errorIcon {
+    font-size: 36px;
+    margin-bottom: 12px;
+  }
+
+  .errorTitle {
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+
+  .errorMessage {
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+
+  .buttonContainer {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .retryButton,
+  .refreshButton {
+    width: 100%;
+    max-width: 200px;
+    padding: 12px 16px;
+  }
+
+  .errorDetails {
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  .errorDetailsCode {
+    font-size: 10px;
+    max-height: 150px;
+  }
+}
+
+@media (max-width: 480px) {
+  .errorContainer {
+    margin: 4px;
+    padding: 12px;
+    border-radius: 6px;
+  }
+
+  .errorIcon {
+    font-size: 32px;
+    margin-bottom: 8px;
+  }
+
+  .errorTitle {
+    font-size: 18px;
+  }
+
+  .errorMessage {
+    font-size: 13px;
+  }
+
+  .retryButton,
+  .refreshButton {
+    font-size: 14px;
+    padding: 10px 14px;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .errorContainer {
+    background-color: #2d1b1b;
+    border-color: #5c2b2b;
+  }
+
+  .errorTitle,
+  .errorMessage {
+    color: #f8d7da;
+  }
+
+  .errorDetails {
+    background-color: #343a40;
+    border-color: #495057;
+  }
+
+  .errorDetailsLabel {
+    color: #ced4da;
+  }
+
+  .errorDetailsSummary {
+    color: #adb5bd;
+  }
+
+  .errorDetailsSummary:hover {
+    color: #ced4da;
+  }
+
+  .errorDetailsCode {
+    background-color: #212529;
+    border-color: #495057;
+    color: #ced4da;
+  }
+
+  .fallbackContainer {
+    background-color: #2d1b1b;
+    border-color: #5c2b2b;
+  }
+
+  .fallbackTitle,
+  .fallbackMessage {
+    color: #f8d7da;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .errorContainer {
+    border-width: 2px;
+    border-color: #000000;
+  }
+
+  .retryButton,
+  .refreshButton,
+  .fallbackButton {
+    border: 2px solid currentColor;
+  }
+
+  .errorDetails {
+    border-width: 2px;
+    border-color: #000000;
+  }
+
+  .errorDetailsCode {
+    border-width: 2px;
+    border-color: #000000;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .retryButton,
+  .refreshButton,
+  .fallbackButton {
+    transition: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .errorContainer {
+    background-color: transparent;
+    border: 1px solid #000000;
+    color: #000000;
+  }
+
+  .errorIcon {
+    display: none;
+  }
+
+  .buttonContainer {
+    display: none;
+  }
+
+  .errorTitle,
+  .errorMessage,
+  .fallbackTitle,
+  .fallbackMessage {
+    color: #000000;
+  }
+
+  .errorDetails {
+    background-color: transparent;
+    border: 1px solid #000000;
+  }
+
+  .errorDetailsCode {
+    background-color: transparent;
+    border: 1px solid #000000;
+    color: #000000;
+  }
+}
+
+/* Loading and disabled states */
+.retryButton:disabled,
+.refreshButton:disabled,
+.fallbackButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.retryButton:disabled:hover,
+.refreshButton:disabled:hover,
+.fallbackButton:disabled:hover {
+  background-color: initial;
+}
+
+/* Focus management for accessibility */
+.errorContainer:focus-within .retryButton:first-of-type {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}

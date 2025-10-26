@@ -1,0 +1,219 @@
+/* VehicleList.module.css - Vehicle list component styles */
+
+.container {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.title {
+  margin: 0 0 16px 0;
+  color: #333;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.vehicleGrid {
+  display: grid;
+  gap: 12px;
+}
+
+.vehicleCard {
+  background-color: white;
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.vehicleCard:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.vehicleInfo {
+  flex: 1;
+}
+
+.vehicleId {
+  font-weight: bold;
+  margin-bottom: 4px;
+  color: #333;
+}
+
+.vehicleLocation {
+  font-size: 14px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vehicleActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.statusContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.statusIcon {
+  font-size: 18px;
+}
+
+.statusText {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.statusAvailable {
+  color: #28a745;
+}
+
+.statusRented {
+  color: #dc3545;
+}
+
+.statusMaintenance {
+  color: #fd7e14;
+}
+
+.statusOutOfService {
+  color: #6c757d;
+}
+
+.statusDefault {
+  color: #007bff;
+}
+
+/* Loading and empty states */
+.loadingContainer {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.loadingSpinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.emptyContainer {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.emptyIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.emptyTitle {
+  font-size: 18px;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.emptySubtitle {
+  font-size: 14px;
+  margin-top: 8px;
+  color: #666;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .container {
+    padding: 12px;
+  }
+
+  .vehicleCard {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .vehicleActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .vehicleId {
+    font-size: 16px;
+  }
+
+  .vehicleLocation {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .vehicleActions {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .statusContainer {
+    justify-content: center;
+  }
+}
+
+/* Accessibility improvements */
+.vehicleCard:focus-within {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .vehicleCard {
+    border-width: 2px;
+  }
+
+  .statusText {
+    text-decoration: underline;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .vehicleCard {
+    transition: none;
+  }
+
+  .vehicleCard:hover {
+    transform: none;
+  }
+
+  .loadingSpinner {
+    animation: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .vehicleCard {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+}

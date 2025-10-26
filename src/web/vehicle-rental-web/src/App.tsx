@@ -1,14 +1,16 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import './App.css';
 import { MapView } from './components/MapView';
 import { VehicleList } from './components/VehicleList';
 import { UserVehiclesView } from './components/UserVehiclesView';
 import { FilterPanel } from './components/FilterPanel';
+import ErrorBoundary from './components/ErrorBoundary';
 import { useGeolocation } from './hooks/useGeolocation';
 import { useVehicles } from './hooks/useVehicles';
 import { useAuthenticatedApi } from './hooks/useAuthenticatedApi';
 import { AuthProvider, AuthButton, useAuth } from './auth';
 import { getUserPermissions, isAuthenticated } from './auth/roleUtils';
+import styles from './styles/App.module.css';
 
 type ViewMode = 'map' | 'list' | 'myVehicles';
 
@@ -37,20 +39,32 @@ const AppContent: React.FC = () => {
     return allVehicles.filter(vehicle => statusFilter.includes(vehicle.status));
   }, [allVehicles, statusFilter]);
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     refresh();
-  };
+  }, [refresh]);
+
+  const handleViewModeChange = useCallback((mode: ViewMode) => {
+    setViewMode(mode);
+  }, []);
+
+  const handleRadiusChange = useCallback((newRadius: number) => {
+    setRadius(newRadius);
+  }, []);
+
+  const handleStatusFilterChange = useCallback((newStatusFilter: string[]) => {
+    setStatusFilter(newStatusFilter);
+  }, []);
 
   return (
     <div className="App">
-      <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-        <header style={{ marginBottom: '30px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div style={{ textAlign: 'left' }}>
-              <h1 style={{ color: '#333', marginBottom: '8px' }}>🚗 Vehicle Rental System</h1>
-              <p style={{ color: '#666', margin: 0 }}>Find available vehicles near you</p>
+      <div className={styles.app}>
+        <header className={styles.header}>
+          <div className={styles.headerContent}>
+            <div className={styles.headerLeft}>
+              <h1 className={styles.headerTitle}>🚗 Vehicle Rental System</h1>
+              <p className={styles.headerSubtitle}>Find available vehicles near you</p>
             </div>
-            <div style={{ textAlign: 'right' }}>
+            <div className={styles.headerRight}>
               <AuthButton
                 className="auth-button-header"
               />
@@ -60,28 +74,14 @@ const AppContent: React.FC = () => {
 
         {/* Location Error */}
         {locationError && (
-          <div style={{
-            backgroundColor: '#f8d7da',
-            color: '#721c24',
-            padding: '12px',
-            borderRadius: '4px',
-            marginBottom: '20px',
-            border: '1px solid #f5c6cb'
-          }}>
+          <div className={styles.errorMessage} role="alert" aria-live="polite">
             ⚠️ Location Error: {locationError}
           </div>
         )}
 
         {/* Vehicles Error */}
         {vehiclesError && (
-          <div style={{
-            backgroundColor: '#f8d7da',
-            color: '#721c24',
-            padding: '12px',
-            borderRadius: '4px',
-            marginBottom: '20px',
-            border: '1px solid #f5c6cb'
-          }}>
+          <div className={styles.errorMessage} role="alert" aria-live="polite">
             ⚠️ Vehicles Error: {vehiclesError}
           </div>
         )}
@@ -89,9 +89,9 @@ const AppContent: React.FC = () => {
         {/* Control Panel */}
         <FilterPanel
           radius={radius}
-          onRadiusChange={setRadius}
+          onRadiusChange={handleRadiusChange}
           statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
+          onStatusFilterChange={handleStatusFilterChange}
           onRefresh={handleRefresh}
           onGetLocation={getCurrentLocation}
           loading={locationLoading || vehiclesLoading}
@@ -100,46 +100,38 @@ const AppContent: React.FC = () => {
         />
 
         {/* View Toggle */}
-        <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+        <div className={styles.viewToggle} role="tablist" aria-label="View modes">
           <button
-            onClick={() => setViewMode('map')}
-            style={{
-              padding: '8px 16px',
-              marginRight: '8px',
-              backgroundColor: viewMode === 'map' ? '#007bff' : '#e9ecef',
-              color: viewMode === 'map' ? 'white' : '#333',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
+            onClick={() => handleViewModeChange('map')}
+            className={`${styles.viewButton} ${
+              viewMode === 'map' ? styles.viewButtonActive : styles.viewButtonInactive
+            }`}
+            role="tab"
+            aria-selected={viewMode === 'map'}
+            aria-controls="main-content"
           >
             🗺️ Map View
           </button>
           <button
-            onClick={() => setViewMode('list')}
-            style={{
-              padding: '8px 16px',
-              marginRight: '8px',
-              backgroundColor: viewMode === 'list' ? '#007bff' : '#e9ecef',
-              color: viewMode === 'list' ? 'white' : '#333',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
+            onClick={() => handleViewModeChange('list')}
+            className={`${styles.viewButton} ${
+              viewMode === 'list' ? styles.viewButtonActive : styles.viewButtonInactive
+            }`}
+            role="tab"
+            aria-selected={viewMode === 'list'}
+            aria-controls="main-content"
           >
             📋 List View
           </button>
           {permissions.canViewOwnVehicles && (
             <button
-              onClick={() => setViewMode('myVehicles')}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: viewMode === 'myVehicles' ? '#28a745' : '#e9ecef',
-                color: viewMode === 'myVehicles' ? 'white' : '#333',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-              }}
+              onClick={() => handleViewModeChange('myVehicles')}
+              className={`${styles.viewButton} ${
+                viewMode === 'myVehicles' ? styles.viewButtonPrimary : styles.viewButtonInactive
+              }`}
+              role="tab"
+              aria-selected={viewMode === 'myVehicles'}
+              aria-controls="main-content"
             >
               🚗 My Vehicles
             </button>
@@ -147,40 +139,35 @@ const AppContent: React.FC = () => {
         </div>
 
         {/* Content */}
-        {viewMode === 'list' ? (
-          <VehicleList
-            vehicles={filteredVehicles}
-            loading={vehiclesLoading}
-            onRefresh={handleRefresh}
-          />
-        ) : viewMode === 'myVehicles' ? (
-          <UserVehiclesView
-            onRefresh={handleRefresh}
-          />
-        ) : (
-          <MapView
-            userLocation={location}
-            vehicles={filteredVehicles}
-            radius={radius}
-          />
-        )}
+        <main id="main-content" role="main">
+          {viewMode === 'list' ? (
+            <VehicleList
+              vehicles={filteredVehicles}
+              loading={vehiclesLoading}
+              onRefresh={handleRefresh}
+            />
+          ) : viewMode === 'myVehicles' ? (
+            <UserVehiclesView
+              onRefresh={handleRefresh}
+            />
+          ) : (
+            <MapView
+              userLocation={location}
+              vehicles={filteredVehicles}
+              radius={radius}
+            />
+          )}
+        </main>
 
         {/* Status Info */}
         {viewMode !== 'myVehicles' && (
-          <div style={{
-            marginTop: '20px',
-            padding: '12px',
-            backgroundColor: '#e9ecef',
-            borderRadius: '4px',
-            fontSize: '14px',
-            textAlign: 'center'
-          }}>
+          <div className={styles.statusInfo} role="status" aria-live="polite">
             {location ? (
               <span>
                 📍 Location: {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)} |
                 🚗 Found {filteredVehicles.length} vehicles within {radius} km
                 {isAutoRefreshEnabled && (
-                  <span style={{ marginLeft: '8px', color: '#28a745' }}>
+                  <span className={styles.autoRefreshIndicator}>
                     | 🔄 Auto-refresh enabled (30s)
                   </span>
                 )}
@@ -193,18 +180,10 @@ const AppContent: React.FC = () => {
 
         {/* User Info */}
         {isAuthenticated(user) && (
-          <div style={{
-            marginTop: '20px',
-            padding: '12px',
-            backgroundColor: '#d4edda',
-            borderRadius: '4px',
-            fontSize: '14px',
-            textAlign: 'center',
-            color: '#155724'
-          }}>
+          <div className={styles.userInfo} role="banner">
             👤 Signed in as {user?.name} | Access Level: {permissions.canUpdateVehicleStatus ? 'Technician' : 'User'}
             {permissions.canUpdateVehicleStatus && (
-              <span style={{ marginLeft: '8px' }}>
+              <span className={styles.technicianIndicator}>
                 | 🔧 Can manage maintenance & service status
               </span>
             )}
@@ -215,12 +194,14 @@ const AppContent: React.FC = () => {
   );
 };
 
-function App() {
+const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ErrorBoundary>
   );
-}
+};
 
 export default App;

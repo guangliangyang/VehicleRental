@@ -18,7 +18,8 @@
       "Bash(rm:*)",
       "Bash(dotnet run:*)",
       "Bash(find:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

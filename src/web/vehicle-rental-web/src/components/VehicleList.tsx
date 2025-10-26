@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import { VehicleSummaryDto, VehicleStatus } from '../types/vehicle';
 import { VehicleActions } from './VehicleActions';
+import styles from '../styles/VehicleList.module.css';
 
 interface VehicleListProps {
   vehicles: VehicleSummaryDto[];
@@ -8,42 +9,85 @@ interface VehicleListProps {
   onRefresh?: () => void;
 }
 
-export const VehicleList: React.FC<VehicleListProps> = ({ vehicles, loading, onRefresh }) => {
+// Memoized status utility functions outside component to prevent recreation
+const getStatusClassName = (status: string): string => {
+  switch (status) {
+    case VehicleStatus.Available:
+      return styles.statusAvailable;
+    case VehicleStatus.Rented:
+      return styles.statusRented;
+    case VehicleStatus.Maintenance:
+      return styles.statusMaintenance;
+    case VehicleStatus.OutOfService:
+      return styles.statusOutOfService;
+    default:
+      return styles.statusDefault;
+  }
+};
 
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case VehicleStatus.Available:
-        return '#28a745';
-      case VehicleStatus.Rented:
-        return '#dc3545';
-      case VehicleStatus.Maintenance:
-        return '#fd7e14';
-      case VehicleStatus.OutOfService:
-        return '#6c757d';
-      default:
-        return '#007bff';
-    }
-  };
+const getStatusIcon = (status: string): string => {
+  switch (status) {
+    case VehicleStatus.Available:
+      return '✅';
+    case VehicleStatus.Rented:
+      return '🚗';
+    case VehicleStatus.Maintenance:
+      return '🔧';
+    case VehicleStatus.OutOfService:
+      return '🚫';
+    default:
+      return '❓';
+  }
+};
 
-  const getStatusIcon = (status: string): string => {
-    switch (status) {
-      case VehicleStatus.Available:
-        return '✅';
-      case VehicleStatus.Rented:
-        return '🚗';
-      case VehicleStatus.Maintenance:
-        return '🔧';
-      case VehicleStatus.OutOfService:
-        return '🚫';
-      default:
-        return '❓';
-    }
-  };
+// Memoized vehicle item component for performance
+const VehicleItem = memo<{
+  vehicle: VehicleSummaryDto;
+  onRefresh?: () => void;
+}>(({ vehicle, onRefresh }) => {
+  return (
+    <div className={styles.vehicleCard}>
+      <div className={styles.vehicleInfo}>
+        <div className={styles.vehicleId}>
+          Vehicle {vehicle.vehicleId}
+        </div>
+        <div className={styles.vehicleLocation}>
+          📍 {vehicle.latitude.toFixed(4)}, {vehicle.longitude.toFixed(4)}
+        </div>
+      </div>
 
+      <div className={styles.vehicleActions}>
+        <div className={styles.statusContainer}>
+          <span className={styles.statusIcon} aria-hidden="true">
+            {getStatusIcon(vehicle.status)}
+          </span>
+          <span
+            className={`${styles.statusText} ${getStatusClassName(vehicle.status)}`}
+          >
+            {vehicle.status}
+          </span>
+        </div>
+
+        <VehicleActions
+          vehicle={vehicle}
+          onRefresh={onRefresh}
+        />
+      </div>
+    </div>
+  );
+});
+
+VehicleItem.displayName = 'VehicleItem';
+
+export const VehicleList: React.FC<VehicleListProps> = memo(({ vehicles, loading, onRefresh }) => {
+  const handleVehicleRefresh = useCallback(() => {
+    onRefresh?.();
+  }, [onRefresh]);
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '20px' }}>
+      <div className={styles.loadingContainer} role="status" aria-live="polite">
+        <div className={styles.loadingSpinner} aria-hidden="true"></div>
         <div>Loading vehicles...</div>
       </div>
     );
@@ -51,9 +95,10 @@ export const VehicleList: React.FC<VehicleListProps> = ({ vehicles, loading, onR
 
   if (vehicles.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
-        <div>🚗 No vehicles found in your area</div>
-        <div style={{ fontSize: '14px', marginTop: '8px' }}>
+      <div className={styles.emptyContainer} role="status">
+        <span className={styles.emptyIcon} aria-hidden="true">🚗</span>
+        <div className={styles.emptyTitle}>No vehicles found in your area</div>
+        <div className={styles.emptySubtitle}>
           Try increasing the search radius or checking your location
         </div>
       </div>
@@ -61,59 +106,23 @@ export const VehicleList: React.FC<VehicleListProps> = ({ vehicles, loading, onR
   }
 
   return (
-    <div style={{ backgroundColor: '#f8f9fa', borderRadius: '8px', padding: '16px' }}>
-      <h3 style={{ margin: '0 0 16px 0' }}>
+    <section className={styles.container} aria-labelledby="vehicle-list-title">
+      <h3 id="vehicle-list-title" className={styles.title}>
         Nearby Vehicles ({vehicles.length})
       </h3>
 
-      <div style={{ display: 'grid', gap: '12px' }}>
+      <div className={styles.vehicleGrid} role="list" aria-label={`${vehicles.length} vehicles found`}>
         {vehicles.map((vehicle) => (
-          <div
-            key={vehicle.vehicleId}
-            style={{
-              backgroundColor: 'white',
-              padding: '16px',
-              borderRadius: '6px',
-              border: '1px solid #dee2e6',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-                Vehicle {vehicle.vehicleId}
-              </div>
-              <div style={{ fontSize: '14px', color: '#666' }}>
-                📍 {vehicle.latitude.toFixed(4)}, {vehicle.longitude.toFixed(4)}
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '18px' }}>
-                  {getStatusIcon(vehicle.status)}
-                </span>
-                <span
-                  style={{
-                    color: getStatusColor(vehicle.status),
-                    fontWeight: 'bold',
-                    fontSize: '14px',
-                  }}
-                >
-                  {vehicle.status}
-                </span>
-              </div>
-
-              <VehicleActions
-                vehicle={vehicle}
-                onRefresh={onRefresh}
-              />
-            </div>
+          <div key={vehicle.vehicleId} role="listitem">
+            <VehicleItem
+              vehicle={vehicle}
+              onRefresh={handleVehicleRefresh}
+            />
           </div>
         ))}
       </div>
-
-    </div>
+    </section>
   );
-};
+});
+
+VehicleList.displayName = 'VehicleList';

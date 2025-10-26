@@ -4,13 +4,6 @@ using VehicleRentalSystem.SharedKernel;
 
 namespace FleetService.Application;
 
-public interface IVehicleQueryService
-{
-    Task<Result<IReadOnlyList<VehicleSummaryDto>>> GetNearbyVehiclesAsync(NearbyVehiclesQuery query, CancellationToken cancellationToken = default);
-
-    Task<Result<IReadOnlyList<VehicleSummaryDto>>> GetUserVehiclesAsync(string userId, CancellationToken cancellationToken = default);
-}
-
 public sealed class VehicleQueryService : IVehicleQueryService
 {
     private readonly IVehicleRepository _repository;

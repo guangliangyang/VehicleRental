@@ -4,6 +4,8 @@
 
 This document provides a detailed explanation of the technical architecture design for the Vehicle Rental System, including design patterns, best practices, and implementation details for both the FleetService backend microservice and Vehicle-Rental-Web frontend application. It serves as a comprehensive guide for technical teams and project handovers.
 
+**Latest Updates**: Document has been updated to reflect the complete React frontend optimization implementation including React.memo patterns, CSS modules architecture, advanced caching strategies, error boundary patterns, and enhanced performance optimizations.
+
 ---
 
 ## 🏗️ Overall Architecture Overview
@@ -851,146 +853,362 @@ export const vehicleService = {
 
 ### Component Design Patterns
 
-#### 🎯 Role-based UI Components
+#### 🎯 React Performance Optimization Implementation
+
+**React.memo and Component Memoization**
 
 ```typescript
-export const VehicleActions: React.FC<VehicleActionsProps> = ({ vehicle, onRefresh }) => {
-    const { user } = useAuth();
-    const permissions = getUserPermissions(user);
+// Optimized VehicleActions with React.memo
+export const VehicleActions: React.FC<VehicleActionsProps> = memo(({
+  vehicle,
+  onRefresh
+}) => {
+  const { user } = useAuth();
+  const permissions = getUserPermissions(user);
+  const [isRenting, setIsRenting] = useState(false);
+  const [isReturning, setIsReturning] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<VehicleStatus>(vehicle.status as VehicleStatus);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+  const currentStatus = vehicle.status as VehicleStatus;
+  const availableStatusTransitions = getAvailableStatusTransitions(user, currentStatus);
+  const userDisplayRole = getDisplayRole(user);
 
-    const handleRent = async () => {
-        if (!permissions.canRentVehicles) return;
+  // useCallback optimization for event handlers
+  const handleRentVehicle = useCallback(async () => {
+    if (!isAuthenticated(user) || currentStatus !== VehicleStatus.Available) return;
 
-        setIsLoading(true);
-        setError(null);
+    setIsRenting(true);
+    setError(null);
 
-        try {
-            await vehicleService.rentVehicle(vehicle.id);
-            onRefresh();
-        } catch (err) {
-            setError('Failed to rent vehicle');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    try {
+      await VehicleService.rentVehicle(vehicle.vehicleId);
+      onRefresh?.();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to rent vehicle';
+      setError(errorMessage);
+      console.error('Failed to rent vehicle:', error);
+    } finally {
+      setIsRenting(false);
+    }
+  }, [user, currentStatus, vehicle.vehicleId, onRefresh]);
 
-    const handleStatusUpdate = async (newStatus: VehicleStatus) => {
-        if (!permissions.canUpdateVehicleStatus) return;
+  const handleReturnVehicle = useCallback(async () => {
+    if (!isAuthenticated(user) || currentStatus !== VehicleStatus.Rented) return;
 
-        setIsLoading(true);
-        setError(null);
+    setIsReturning(true);
+    setError(null);
 
-        try {
-            await vehicleService.updateVehicleStatus(
-                vehicle.id,
-                vehicle.status,
-                newStatus
-            );
-            onRefresh();
-        } catch (err) {
-            setError('Failed to update vehicle status');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    try {
+      await VehicleService.returnVehicle(vehicle.vehicleId);
+      onRefresh?.();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to return vehicle';
+      setError(errorMessage);
+      console.error('Failed to return vehicle:', error);
+    } finally {
+      setIsReturning(false);
+    }
+  }, [user, currentStatus, vehicle.vehicleId, onRefresh]);
 
-    return (
-        <div className="vehicle-actions">
-            {error && <div className="error-message">{error}</div>}
+  const handleStatusChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedStatus(event.target.value as VehicleStatus);
+    setError(null);
+  }, []);
 
-            {/* User actions */}
-            {permissions.canRentVehicles && vehicle.status === 'Available' && (
-                <button
-                    onClick={handleRent}
-                    disabled={isLoading}
-                    className="btn btn-primary"
-                >
-                    {isLoading ? 'Renting...' : 'Rent Vehicle'}
-                </button>
-            )}
+  const handleStatusUpdate = useCallback(async () => {
+    if (selectedStatus === currentStatus) return;
 
-            {/* Technician actions */}
-            {permissions.canUpdateVehicleStatus && (
-                <div className="technician-actions">
-                    <button
-                        onClick={() => handleStatusUpdate('Maintenance')}
-                        disabled={isLoading}
-                        className="btn btn-warning"
-                    >
-                        Set Maintenance
-                    </button>
+    setIsUpdatingStatus(true);
+    setError(null);
 
-                    <button
-                        onClick={() => handleStatusUpdate('OutOfService')}
-                        disabled={isLoading}
-                        className="btn btn-danger"
-                    >
-                        Set Out of Service
-                    </button>
-                </div>
-            )}
+    try {
+      await VehicleService.updateVehicleStatus(vehicle.vehicleId, currentStatus, selectedStatus);
+      onRefresh?.();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update vehicle status';
+      setError(errorMessage);
+      setSelectedStatus(currentStatus); // Reset to current status on error
+      console.error('Failed to update vehicle status:', error);
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  }, [selectedStatus, currentStatus, vehicle.vehicleId, onRefresh]);
+
+  // CSS Modules implementation
+  return (
+    <div className={styles.container}>
+      {/* Role Display */}
+      <div className={styles.roleDisplay} aria-label={`User role: ${userDisplayRole}`}>
+        Role: {userDisplayRole}
+      </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className={styles.errorMessage} role="alert" aria-live="polite">
+          {error}
         </div>
-    );
-};
+      )}
+
+      {/* Rent/Return Actions with Accessibility */}
+      {permissions.canRentVehicles && currentStatus === VehicleStatus.Available && (
+        <button
+          onClick={handleRentVehicle}
+          disabled={isRenting}
+          className={`${styles.actionButton} ${styles.rentButton}`}
+          aria-label={`Rent vehicle ${vehicle.vehicleId}`}
+        >
+          {isRenting ? (
+            <>
+              <span className={styles.spinner} aria-hidden="true"></span>
+              Renting...
+            </>
+          ) : (
+            <>🚗 Rent Vehicle</>
+          )}
+        </button>
+      )}
+
+      {/* Status Controls for Technicians */}
+      {permissions.canUpdateVehicleStatus && availableStatusTransitions.length > 0 && (
+        <div className={styles.statusControls}>
+          <label htmlFor={`status-select-${vehicle.vehicleId}`} className="sr-only">
+            Update vehicle status
+          </label>
+          <select
+            id={`status-select-${vehicle.vehicleId}`}
+            value={selectedStatus}
+            onChange={handleStatusChange}
+            disabled={isUpdatingStatus}
+            className={styles.statusSelect}
+            aria-label={`Current status: ${currentStatus}. Select new status`}
+          >
+            <option value={currentStatus}>{currentStatus}</option>
+            {availableStatusTransitions.map(status => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
+          </select>
+
+          <button
+            onClick={handleStatusUpdate}
+            disabled={isUpdatingStatus || selectedStatus === currentStatus}
+            className={`${styles.updateButton} ${updateButtonClass}`}
+            aria-label={selectedStatus !== currentStatus ? `Update status to ${selectedStatus}` : 'No status change selected'}
+          >
+            {isUpdatingStatus ? '⏳' : '🔧'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+});
+
+VehicleActions.displayName = 'VehicleActions';
 ```
 
-#### 🎯 Custom Hooks
+#### 🎯 Enhanced Custom Hooks with Request Deduplication and Caching
+
+**useVehicles Hook with Advanced Caching**
 
 ```typescript
-// Vehicle data management hook
-export const useVehicles = () => {
-    const [vehicles, setVehicles] = useState<VehicleSummaryDto[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+// Request deduplication cache
+const requestCache = new Map<string, Promise<VehicleSummaryDto[]>>();
+const CACHE_TTL = 10000; // 10 seconds
+const cacheTimestamps = new Map<string, number>();
 
-    const fetchNearbyVehicles = useCallback(async (
-        latitude: number,
-        longitude: number,
-        radius: number = 5
-    ) => {
-        setLoading(true);
+// Create a cache key based on location and radius
+const createCacheKey = (location: UserLocation, radius: number): string => {
+  return `${location.latitude.toFixed(4)}-${location.longitude.toFixed(4)}-${radius}`;
+};
+
+// Check if cache entry is still valid
+const isCacheValid = (key: string): boolean => {
+  const timestamp = cacheTimestamps.get(key);
+  return timestamp ? Date.now() - timestamp < CACHE_TTL : false;
+};
+
+// Clear expired cache entries
+const clearExpiredCache = (): void => {
+  const now = Date.now();
+  for (const [key, timestamp] of cacheTimestamps.entries()) {
+    if (now - timestamp >= CACHE_TTL) {
+      requestCache.delete(key);
+      cacheTimestamps.delete(key);
+    }
+  }
+};
+
+export const useVehicles = (
+  userLocation: UserLocation | null,
+  radius: number = 5,
+  autoRefreshInterval: number = 30000
+): UseVehiclesResult => {
+  const [vehicles, setVehicles] = useState<VehicleSummaryDto[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isAutoRefreshEnabled, setIsAutoRefreshEnabled] = useState<boolean>(true);
+
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const lastFetchRef = useRef<{ location: UserLocation | null; radius: number } | null>(null);
+
+  // Memoize cache key to prevent unnecessary recalculations
+  const cacheKey = useMemo(() => {
+    if (!userLocation) return null;
+    return createCacheKey(userLocation, radius);
+  }, [userLocation, radius]);
+
+  // Enhanced fetch function with deduplication and caching
+  const fetchVehicles = useCallback(async (forceRefresh = false) => {
+    if (!userLocation || !cacheKey) return;
+
+    // Clean up any previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new abort controller for this request
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
+    // Check if we're already fetching the same data
+    const isDuplicateRequest =
+      lastFetchRef.current &&
+      lastFetchRef.current.location?.latitude === userLocation.latitude &&
+      lastFetchRef.current.location?.longitude === userLocation.longitude &&
+      lastFetchRef.current.radius === radius &&
+      !forceRefresh;
+
+    if (isDuplicateRequest && loading) {
+      return; // Skip duplicate request
+    }
+
+    // Check cache first (unless force refresh)
+    if (!forceRefresh && isCacheValid(cacheKey) && requestCache.has(cacheKey)) {
+      try {
+        const cachedPromise = requestCache.get(cacheKey)!;
+        const cachedData = await cachedPromise;
+
+        if (!abortController.signal.aborted) {
+          setVehicles(cachedData);
+          setError(null);
+        }
+        return;
+      } catch (err) {
+        // If cached request failed, continue with new request
+        requestCache.delete(cacheKey);
+        cacheTimestamps.delete(cacheKey);
+      }
+    }
+
+    // Clear expired cache entries periodically
+    clearExpiredCache();
+
+    // Update last fetch reference
+    lastFetchRef.current = { location: userLocation, radius };
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Create the API request promise
+      const apiRequest = VehicleService.getNearbyVehicles({
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+        radius,
+      });
+
+      // Cache the promise to deduplicate concurrent requests
+      requestCache.set(cacheKey, apiRequest);
+      cacheTimestamps.set(cacheKey, Date.now());
+
+      const nearbyVehicles = await apiRequest;
+
+      // Only update state if the request wasn't aborted
+      if (!abortController.signal.aborted) {
+        setVehicles(nearbyVehicles);
         setError(null);
+      }
+    } catch (err) {
+      // Remove failed request from cache
+      requestCache.delete(cacheKey);
+      cacheTimestamps.delete(cacheKey);
 
-        try {
-            const data = await vehicleService.getNearbyVehicles(latitude, longitude, radius);
-            setVehicles(data);
-        } catch (err) {
-            setError('Failed to fetch nearby vehicles');
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+      if (!abortController.signal.aborted) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch vehicles';
+        setError(errorMessage);
+        console.error('Failed to fetch vehicles:', err);
+      }
+    } finally {
+      if (!abortController.signal.aborted) {
+        setLoading(false);
+      }
+    }
+  }, [userLocation, radius, cacheKey, loading]);
 
-    const fetchUserVehicles = useCallback(async () => {
-        setLoading(true);
-        setError(null);
+  // Memoized refresh function
+  const refresh = useCallback(() => {
+    fetchVehicles(true); // Force refresh bypasses cache
+  }, [fetchVehicles]);
 
-        try {
-            const data = await vehicleService.getUserVehicles();
-            setVehicles(data);
-        } catch (err) {
-            setError('Failed to fetch user vehicles');
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+  // Memoized toggle function
+  const toggleAutoRefresh = useCallback(() => {
+    setIsAutoRefreshEnabled(prev => !prev);
+  }, []);
 
-    return {
-        vehicles,
-        loading,
-        error,
-        fetchNearbyVehicles,
-        fetchUserVehicles,
-        refresh: () => {
-            // Re-fetch current data
-            if (vehicles.length > 0) {
-                // Determine refresh strategy based on context
-            }
-        }
+  // Set up periodic refresh with cleanup
+  useEffect(() => {
+    if (isAutoRefreshEnabled && userLocation) {
+      // Clear any existing interval
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+
+      // Set up new interval
+      intervalRef.current = setInterval(() => {
+        fetchVehicles(false); // Auto-refresh can use cache
+      }, autoRefreshInterval);
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     };
+  }, [isAutoRefreshEnabled, fetchVehicles, autoRefreshInterval, userLocation]);
+
+  // Fetch vehicles when location or radius changes
+  useEffect(() => {
+    fetchVehicles(false);
+  }, [fetchVehicles]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // Clear interval
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+
+      // Abort any pending requests
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
+  return {
+    vehicles,
+    loading,
+    error,
+    refresh,
+    isAutoRefreshEnabled,
+    toggleAutoRefresh
+  };
 };
 
 // Geolocation hook
@@ -1033,9 +1251,806 @@ export const useGeolocation = () => {
 };
 ```
 
+#### 🎯 Enhanced Service Layer with Retry Logic and Caching
+
+**VehicleService Implementation**
+
+```typescript
+// Enhanced error handling interface
+interface ServiceError extends Error {
+  code?: string;
+  statusCode?: number;
+  isRetryable?: boolean;
+}
+
+// Simple in-memory cache for user vehicles
+class UserVehicleCache {
+  private cache: VehicleSummaryDto[] | null = null;
+  private timestamp: number = 0;
+  private readonly TTL = 30000; // 30 seconds
+
+  set(vehicles: VehicleSummaryDto[]): void {
+    this.cache = vehicles;
+    this.timestamp = Date.now();
+  }
+
+  get(): VehicleSummaryDto[] | null {
+    if (!this.cache || Date.now() - this.timestamp > this.TTL) {
+      this.clear();
+      return null;
+    }
+    return this.cache;
+  }
+
+  clear(): void {
+    this.cache = null;
+    this.timestamp = 0;
+  }
+
+  // Invalidate cache when vehicle status changes
+  invalidate(): void {
+    this.clear();
+  }
+}
+
+// Request retry configuration
+interface RetryConfig {
+  maxRetries: number;
+  baseDelay: number;
+  maxDelay: number;
+  retryableStatusCodes: number[];
+}
+
+const DEFAULT_RETRY_CONFIG: RetryConfig = {
+  maxRetries: 3,
+  baseDelay: 1000,
+  maxDelay: 5000,
+  retryableStatusCodes: [408, 429, 500, 502, 503, 504]
+};
+
+// Exponential backoff delay calculation
+const calculateDelay = (attempt: number, baseDelay: number, maxDelay: number): number => {
+  const delay = baseDelay * Math.pow(2, attempt);
+  return Math.min(delay + Math.random() * 1000, maxDelay);
+};
+
+// Enhanced error creation with additional context
+const createServiceError = (error: unknown, context: string): ServiceError => {
+  if (axios.isAxiosError(error)) {
+    const axiosError = error as AxiosError;
+    const serviceError = new Error(`${context}: ${axiosError.message}`) as ServiceError;
+
+    serviceError.code = axiosError.code;
+    serviceError.statusCode = axiosError.response?.status;
+    serviceError.isRetryable = axiosError.response ?
+      DEFAULT_RETRY_CONFIG.retryableStatusCodes.includes(axiosError.response.status) :
+      true; // Network errors are generally retryable
+
+    return serviceError;
+  }
+
+  if (error instanceof Error) {
+    const serviceError = new Error(`${context}: ${error.message}`) as ServiceError;
+    serviceError.isRetryable = false;
+    return serviceError;
+  }
+
+  const serviceError = new Error(`${context}: Unknown error occurred`) as ServiceError;
+  serviceError.isRetryable = false;
+  return serviceError;
+};
+
+// Retry mechanism with exponential backoff
+const retryRequest = async <T>(
+  requestFn: () => Promise<T>,
+  context: string,
+  config: RetryConfig = DEFAULT_RETRY_CONFIG
+): Promise<T> => {
+  let lastError: ServiceError;
+
+  for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
+    try {
+      return await requestFn();
+    } catch (error) {
+      lastError = createServiceError(error, context);
+
+      // Don't retry on last attempt or non-retryable errors
+      if (attempt === config.maxRetries || !lastError.isRetryable) {
+        throw lastError;
+      }
+
+      // Wait before retrying
+      const delay = calculateDelay(attempt, config.baseDelay, config.maxDelay);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+
+  throw lastError!;
+};
+
+export class VehicleService {
+  /**
+   * Get nearby vehicles with enhanced error handling and logging
+   */
+  static async getNearbyVehicles(query: NearbyVehiclesQuery): Promise<VehicleSummaryDto[]> {
+    return retryRequest(async () => {
+      const params = {
+        latitude: query.latitude,
+        longitude: query.longitude,
+        radius: query.radius || 5
+      };
+
+      try {
+        // Use anonymous client for nearby vehicles (no authentication required)
+        const response = await anonymousHttpClient.get<VehicleSummaryDto[]>('/vehicles/nearby', { params });
+        return response;
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.data) {
+          const apiError = error.response.data as ApiError;
+          throw new Error(`API Error ${error.response.status}: ${apiError.message || apiError.code}`);
+        }
+        throw error;
+      }
+    }, 'Failed to fetch nearby vehicles');
+  }
+
+  /**
+   * Update vehicle status with enhanced concurrency handling
+   */
+  static async updateVehicleStatus(
+    vehicleId: string,
+    expectedCurrentStatus: VehicleStatus,
+    newStatus: VehicleStatus
+  ): Promise<void> {
+    return retryRequest(async () => {
+      try {
+        await httpClient.put(`/vehicles/${vehicleId}/status`, {
+          expectedCurrentStatus: statusToNumericMap[expectedCurrentStatus],
+          newStatus: statusToNumericMap[newStatus]
+        });
+
+        // Invalidate user vehicle cache since status changed
+        userVehicleCache.invalidate();
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.data) {
+          // Handle concurrency conflict (409 status)
+          if (error.response.status === 409) {
+            const conflictError = error.response.data as ConcurrencyConflictError;
+            throw new VehicleConcurrencyError(
+              normalizeStatus(conflictError.expectedCurrentStatus),
+              normalizeStatus(conflictError.attemptedNewStatus),
+              normalizeStatus(conflictError.actualCurrentStatus),
+              conflictError.message
+            );
+          }
+
+          // Handle other API errors
+          const apiError = error.response.data as ApiError;
+          throw new Error(`API Error ${error.response.status}: ${apiError.message || apiError.code}`);
+        }
+        throw error;
+      }
+    }, 'Failed to update vehicle status', {
+      ...DEFAULT_RETRY_CONFIG,
+      maxRetries: 1 // Don't retry concurrency conflicts or business logic errors
+    });
+  }
+}
+```
+
+#### 🎯 CSS Modules Architecture Implementation
+
+**Project CSS Organization Structure**
+
+```
+src/styles/
+├── App.module.css              # Main application styles
+├── VehicleList.module.css      # Vehicle list component styles
+├── VehicleActions.module.css   # Vehicle actions component styles
+└── ErrorBoundary.module.css    # Error boundary component styles
+```
+
+**CSS Modules Best Practices Implementation**
+
+```css
+/* VehicleActions.module.css - Component-specific scoped styles */
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 120px;
+}
+
+.roleDisplay {
+  font-size: 11px;
+  color: #666;
+  text-align: center;
+}
+
+.actionButton {
+  padding: 6px 12px;
+  font-size: 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-weight: 500;
+}
+
+.actionButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.actionButton:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+.rentButton {
+  background-color: #28a745;
+  color: white;
+}
+
+.rentButton:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .container {
+    min-width: 100px;
+    gap: 6px;
+  }
+
+  .actionButton {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+}
+
+/* Accessibility support */
+@media (prefers-contrast: high) {
+  .actionButton {
+    border: 1px solid currentColor;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .actionButton {
+    transition: none;
+  }
+
+  .actionButton:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .spinner {
+    animation: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .actionButton {
+    display: none;
+  }
+
+  .roleDisplay {
+    color: #000;
+  }
+}
+```
+
+**CSS Modules Usage Pattern**
+
+```typescript
+// Component implementation with CSS Modules
+import styles from '../styles/VehicleActions.module.css';
+
+export const VehicleActions: React.FC<VehicleActionsProps> = memo(({ vehicle, onRefresh }) => {
+  return (
+    <div className={styles.container}>
+      <div className={styles.roleDisplay}>
+        Role: {userDisplayRole}
+      </div>
+
+      <button
+        onClick={handleRent}
+        className={`${styles.actionButton} ${styles.rentButton}`}
+        aria-label={`Rent vehicle ${vehicle.vehicleId}`}
+      >
+        {isRenting ? (
+          <>
+            <span className={styles.spinner} aria-hidden="true"></span>
+            Renting...
+          </>
+        ) : (
+          <>🚗 Rent Vehicle</>
+        )}
+      </button>
+    </div>
+  );
+});
+```
+
+#### 🎯 Error Boundary Pattern Implementation
+
+**ErrorBoundary Component with CSS Modules**
+
+```typescript
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+import styles from '../styles/ErrorBoundary.module.css';
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+  errorInfo?: ErrorInfo;
+}
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+  fallback?: ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+}
+
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    // Update state so the next render will show the fallback UI
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    // Update state with error details
+    this.setState({
+      error,
+      errorInfo
+    });
+
+    // Call the onError callback if provided
+    if (this.props.onError) {
+      this.props.onError(error, errorInfo);
+    }
+
+    // Log error to console in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('ErrorBoundary caught an error:', error, errorInfo);
+    }
+  }
+
+  private handleRetry = (): void => {
+    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+  };
+
+  render(): ReactNode {
+    if (this.state.hasError) {
+      // Custom fallback UI
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+
+      // Default error UI with CSS Modules
+      return (
+        <div className={styles.errorContainer} role="alert">
+          <span className={styles.errorIcon} aria-hidden="true">
+            😞
+          </span>
+
+          <h2 className={styles.errorTitle}>
+            Oops! Something went wrong
+          </h2>
+
+          <p className={styles.errorMessage}>
+            We encountered an unexpected error. Please try refreshing the page or contact support if the problem persists.
+          </p>
+
+          <div className={styles.buttonContainer}>
+            <button
+              onClick={this.handleRetry}
+              className={styles.retryButton}
+              aria-label="Try to recover from error"
+            >
+              Try Again
+            </button>
+
+            <button
+              onClick={() => window.location.reload()}
+              className={styles.refreshButton}
+              aria-label="Reload the page"
+            >
+              Refresh Page
+            </button>
+          </div>
+
+          {/* Show error details in development */}
+          {process.env.NODE_ENV === 'development' && this.state.error && (
+            <details className={styles.errorDetails}>
+              <summary className={styles.errorDetailsSummary}>
+                Error Details (Development)
+              </summary>
+
+              <div className={styles.errorDetailsSection}>
+                <div className={styles.errorDetailsLabel}>Error:</div>
+                {this.state.error.message}
+              </div>
+
+              <div className={styles.errorDetailsSection}>
+                <div className={styles.errorDetailsLabel}>Stack Trace:</div>
+                <pre className={styles.errorDetailsCode}>
+                  {this.state.error.stack}
+                </pre>
+              </div>
+
+              {this.state.errorInfo && (
+                <div className={styles.errorDetailsSection}>
+                  <div className={styles.errorDetailsLabel}>Component Stack:</div>
+                  <pre className={styles.errorDetailsCode}>
+                    {this.state.errorInfo.componentStack}
+                  </pre>
+                </div>
+              )}
+            </details>
+          )}
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// Functional component wrapper for easier use with hooks
+export const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetError }) => (
+  <div role="alert" className={styles.fallbackContainer}>
+    <h2 className={styles.fallbackTitle}>
+      Something went wrong
+    </h2>
+
+    <p className={styles.fallbackMessage}>
+      {error.message}
+    </p>
+
+    <button
+      onClick={resetError}
+      className={styles.fallbackButton}
+      aria-label="Try to recover from error"
+    >
+      Try again
+    </button>
+  </div>
+);
+```
+
 ---
 
-## 🏆 Best Practices Implementation Details
+## 🏆 React Frontend Best Practices Implementation Details
+
+### 1. React Performance Optimization Patterns
+
+#### ✅ React.memo Implementation
+```typescript
+// Prevent unnecessary re-renders with React.memo
+export const VehicleActions: React.FC<VehicleActionsProps> = memo(({
+  vehicle,
+  onRefresh
+}) => {
+  // Component implementation
+});
+
+VehicleActions.displayName = 'VehicleActions';
+
+// Memoized sub-components for better performance
+const VehicleItem = memo<{
+  vehicle: VehicleSummaryDto;
+  onRefresh?: () => void;
+}>(({ vehicle, onRefresh }) => {
+  return (
+    <div className={styles.vehicleCard}>
+      {/* Vehicle card content */}
+    </div>
+  );
+});
+
+VehicleItem.displayName = 'VehicleItem';
+```
+
+#### ✅ useCallback Optimization
+```typescript
+// Memoize event handlers to prevent child re-renders
+const handleRentVehicle = useCallback(async () => {
+  if (!isAuthenticated(user) || currentStatus !== VehicleStatus.Available) return;
+
+  setIsRenting(true);
+  setError(null);
+
+  try {
+    await VehicleService.rentVehicle(vehicle.vehicleId);
+    onRefresh?.();
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to rent vehicle';
+    setError(errorMessage);
+    console.error('Failed to rent vehicle:', error);
+  } finally {
+    setIsRenting(false);
+  }
+}, [user, currentStatus, vehicle.vehicleId, onRefresh]);
+
+// Memoize refresh function to prevent useEffect dependency issues
+const refresh = useCallback(() => {
+  fetchVehicles(true); // Force refresh bypasses cache
+}, [fetchVehicles]);
+```
+
+#### ✅ useMemo for Expensive Calculations
+```typescript
+// Memoize cache key to prevent unnecessary recalculations
+const cacheKey = useMemo(() => {
+  if (!userLocation) return null;
+  return createCacheKey(userLocation, radius);
+}, [userLocation, radius]);
+
+// Extract utility functions outside component to prevent recreation
+const getStatusClassName = (status: string): string => {
+  switch (status) {
+    case VehicleStatus.Available:
+      return styles.statusAvailable;
+    case VehicleStatus.Rented:
+      return styles.statusRented;
+    case VehicleStatus.Maintenance:
+      return styles.statusMaintenance;
+    case VehicleStatus.OutOfService:
+      return styles.statusOutOfService;
+    default:
+      return styles.statusDefault;
+  }
+};
+```
+
+### 2. Advanced Request Management Patterns
+
+#### ✅ Request Deduplication
+```typescript
+// Prevent duplicate concurrent requests with promise caching
+const requestCache = new Map<string, Promise<VehicleSummaryDto[]>>();
+const CACHE_TTL = 10000; // 10 seconds
+const cacheTimestamps = new Map<string, number>();
+
+// Check if we're already fetching the same data
+const isDuplicateRequest =
+  lastFetchRef.current &&
+  lastFetchRef.current.location?.latitude === userLocation.latitude &&
+  lastFetchRef.current.location?.longitude === userLocation.longitude &&
+  lastFetchRef.current.radius === radius &&
+  !forceRefresh;
+
+if (isDuplicateRequest && loading) {
+  return; // Skip duplicate request
+}
+```
+
+#### ✅ AbortController for Request Cancellation
+```typescript
+// Clean up any previous request
+if (abortControllerRef.current) {
+  abortControllerRef.current.abort();
+}
+
+// Create new abort controller for this request
+const abortController = new AbortController();
+abortControllerRef.current = abortController;
+
+// Only update state if the request wasn't aborted
+if (!abortController.signal.aborted) {
+  setVehicles(nearbyVehicles);
+  setError(null);
+}
+```
+
+### 3. CSS Modules Architecture Best Practices
+
+#### ✅ Component-Specific Scoped Styling
+- **File Organization**: Each component has its own CSS module file
+- **Naming Convention**: Descriptive class names (`.actionButton`, `.errorContainer`)
+- **Scoped Classes**: All styles are automatically scoped to prevent conflicts
+- **Performance**: Tree-shaking removes unused styles
+
+#### ✅ Responsive Design Implementation
+```css
+/* Mobile-first responsive design */
+@media (max-width: 768px) {
+  .container {
+    min-width: 100px;
+    gap: 6px;
+  }
+
+  .actionButton {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .statusControls {
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    width: 100%;
+  }
+
+  .statusControls {
+    flex-direction: row;
+  }
+}
+```
+
+#### ✅ Accessibility Support
+```css
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .actionButton {
+    border: 1px solid currentColor;
+  }
+
+  .statusSelect {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .actionButton {
+    transition: none;
+  }
+
+  .actionButton:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .spinner {
+    animation: none;
+  }
+}
+
+/* Focus management for accessibility */
+.actionButton:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+```
+
+### 4. Enhanced Error Handling Strategy
+
+#### ✅ Error Boundary Implementation
+```typescript
+// Class-based error boundary for catching React errors
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    // Update state so the next render will show the fallback UI
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    // Log error to console in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('ErrorBoundary caught an error:', error, errorInfo);
+    }
+
+    // Call optional error reporting callback
+    if (this.props.onError) {
+      this.props.onError(error, errorInfo);
+    }
+  }
+}
+```
+
+#### ✅ Service Layer Error Handling with Retry Logic
+```typescript
+// Enhanced error handling with retry mechanism
+const retryRequest = async <T>(
+  requestFn: () => Promise<T>,
+  context: string,
+  config: RetryConfig = DEFAULT_RETRY_CONFIG
+): Promise<T> => {
+  let lastError: ServiceError;
+
+  for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
+    try {
+      return await requestFn();
+    } catch (error) {
+      lastError = createServiceError(error, context);
+
+      // Don't retry on last attempt or non-retryable errors
+      if (attempt === config.maxRetries || !lastError.isRetryable) {
+        throw lastError;
+      }
+
+      // Exponential backoff with jitter
+      const delay = calculateDelay(attempt, config.baseDelay, config.maxDelay);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+
+  throw lastError!;
+};
+```
+
+### 5. Cache Management Strategy
+
+#### ✅ UserVehicleCache Implementation
+```typescript
+// Simple in-memory cache for user vehicles
+class UserVehicleCache {
+  private cache: VehicleSummaryDto[] | null = null;
+  private timestamp: number = 0;
+  private readonly TTL = 30000; // 30 seconds
+
+  set(vehicles: VehicleSummaryDto[]): void {
+    this.cache = vehicles;
+    this.timestamp = Date.now();
+  }
+
+  get(): VehicleSummaryDto[] | null {
+    if (!this.cache || Date.now() - this.timestamp > this.TTL) {
+      this.clear();
+      return null;
+    }
+    return this.cache;
+  }
+
+  // Invalidate cache when vehicle status changes
+  invalidate(): void {
+    this.clear();
+  }
+}
+```
+
+#### ✅ Request-Level Caching with TTL
+```typescript
+// Clear expired cache entries periodically
+const clearExpiredCache = (): void => {
+  const now = Date.now();
+  for (const [key, timestamp] of cacheTimestamps.entries()) {
+    if (now - timestamp >= CACHE_TTL) {
+      requestCache.delete(key);
+      cacheTimestamps.delete(key);
+    }
+  }
+};
+
+// Cache the promise to deduplicate concurrent requests
+requestCache.set(cacheKey, apiRequest);
+cacheTimestamps.set(cacheKey, Date.now());
+```
+
+---
+
+## 🏆 Backend Best Practices Implementation Details
 
 ### 1. SOLID Principles Implementation
 
@@ -1284,7 +2299,19 @@ public async Task GetNearbyVehicles_ShouldReturnVehiclesWithinRadius()
 
 ---
 
-**Document Version**: v1.0
+**Document Version**: v2.0
 **Creation Date**: 2024-10-26
+**Last Updated**: 2024-10-27
 **Applicable Versions**: .NET 8.0, React 19.2.0
 **Maintenance Team**: Vehicle Rental Development Team
+
+**Version 2.0 Updates**:
+- ✅ Added React Performance Optimization patterns (React.memo, useCallback, useMemo)
+- ✅ Enhanced useVehicles hook with request deduplication and caching
+- ✅ CSS Modules architecture implementation with responsive design
+- ✅ ErrorBoundary pattern with CSS modules and accessibility features
+- ✅ VehicleService retry logic with exponential backoff
+- ✅ UserVehicleCache implementation for improved performance
+- ✅ Advanced error handling strategies for frontend
+- ✅ Accessibility support (WCAG compliance)
+- ✅ AbortController implementation for request cancellation
