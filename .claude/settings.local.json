@@ -17,7 +17,8 @@
       "Bash(cp:*)",
       "Bash(rm:*)",
       "Bash(dotnet run:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(tree:*)"
     ],
     "deny": [],
     "ask": []
