@@ -30,12 +30,12 @@ const isCacheValid = (key: string): boolean => {
 // Clear expired cache entries
 const clearExpiredCache = (): void => {
   const now = Date.now();
-  for (const [key, timestamp] of cacheTimestamps.entries()) {
+  cacheTimestamps.forEach((timestamp, key) => {
     if (now - timestamp >= CACHE_TTL) {
       requestCache.delete(key);
       cacheTimestamps.delete(key);
     }
-  }
+  });
 };
 
 export const useVehicles = (
