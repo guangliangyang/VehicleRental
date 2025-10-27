@@ -59,9 +59,10 @@ export const AuthButton: React.FC<AuthButtonProps> = ({
     return (
       <button
         disabled
-        className={`auth-button auth-button--loading ${className}`}
+        className={`btn btn-secondary ${className}`}
         data-testid="auth-button-loading"
       >
+        <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
         {loadingText}
       </button>
     );
@@ -69,28 +70,20 @@ export const AuthButton: React.FC<AuthButtonProps> = ({
 
   if (isAuthenticated) {
     return (
-      <div className={`auth-button-container ${className}`} data-testid="auth-button-authenticated">
+      <div className={`d-flex align-items-center gap-3 flex-wrap ${className}`} data-testid="auth-button-authenticated">
         {showUserInfo && user && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginRight: '12px' }}>
+          <div className="d-flex flex-column align-items-end">
             <span
-              className="auth-button__user-info"
+              className="fw-bold text-dark"
               data-testid="auth-button-user-info"
-              style={{ fontSize: '14px', fontWeight: 'bold' }}
+              style={{ fontSize: '14px' }}
             >
               Welcome, {user.name}
             </span>
             {showUserRole && (
               <span
-                className="auth-button__user-role"
+                className="badge bg-light text-muted small mt-1"
                 data-testid="auth-button-user-role"
-                style={{
-                  fontSize: '12px',
-                  color: '#666',
-                  backgroundColor: '#f8f9fa',
-                  padding: '2px 6px',
-                  borderRadius: '12px',
-                  marginTop: '2px'
-                }}
               >
                 {getDisplayRole(user)}
               </span>
@@ -99,15 +92,16 @@ export const AuthButton: React.FC<AuthButtonProps> = ({
         )}
         <button
           onClick={handleLogout}
-          className="auth-button auth-button--logout"
+          className="btn btn-danger btn-sm"
           data-testid="auth-button-logout"
         >
           {logoutText}
         </button>
         {error && (
           <div
-            className="auth-button__error"
+            className="alert alert-danger py-1 px-2 mb-0 small"
             data-testid="auth-button-error"
+            style={{ maxWidth: '200px' }}
           >
             {error}
           </div>
@@ -117,18 +111,19 @@ export const AuthButton: React.FC<AuthButtonProps> = ({
   }
 
   return (
-    <div className={`auth-button-container ${className}`} data-testid="auth-button-unauthenticated">
+    <div className={`d-flex align-items-center gap-3 flex-wrap ${className}`} data-testid="auth-button-unauthenticated">
       <button
         onClick={handleLogin}
-        className="auth-button auth-button--login"
+        className="btn btn-primary btn-sm"
         data-testid="auth-button-login"
       >
         {loginText}
       </button>
       {error && (
         <div
-          className="auth-button__error"
+          className="alert alert-danger py-1 px-2 mb-0 small"
           data-testid="auth-button-error"
+          style={{ maxWidth: '200px' }}
         >
           {error}
         </div>

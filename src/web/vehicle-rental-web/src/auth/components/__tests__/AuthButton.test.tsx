@@ -66,7 +66,7 @@ describe('AuthButton', () => {
       render(<AuthButton className="custom-class" />);
 
       const button = screen.getByTestId('auth-button-loading');
-      expect(button).toHaveClass('auth-button', 'auth-button--loading', 'custom-class');
+      expect(button).toHaveClass('btn', 'btn-secondary', 'custom-class');
     });
   });
 
@@ -368,7 +368,7 @@ describe('AuthButton', () => {
       render(<AuthButton className="my-custom-class" />);
 
       const container = screen.getByTestId('auth-button-unauthenticated');
-      expect(container).toHaveClass('auth-button-container', 'my-custom-class');
+      expect(container).toHaveClass('d-flex', 'align-items-center', 'gap-3', 'flex-wrap', 'my-custom-class');
     });
 
     it('should not call callbacks when they are not provided', async () => {
@@ -398,7 +398,7 @@ describe('AuthButton', () => {
       expect(button).toHaveTextContent('Sign In');
 
       const container = screen.getByTestId('auth-button-unauthenticated');
-      expect(container).toHaveClass('auth-button-container');
+      expect(container).toHaveClass('d-flex', 'align-items-center', 'gap-3', 'flex-wrap');
     });
 
     it('should handle empty className', () => {
@@ -406,7 +406,7 @@ describe('AuthButton', () => {
       render(<AuthButton className="" />);
 
       const container = screen.getByTestId('auth-button-unauthenticated');
-      expect(container).toHaveClass('auth-button-container');
+      expect(container).toHaveClass('d-flex', 'align-items-center', 'gap-3', 'flex-wrap');
     });
   });
 
@@ -416,7 +416,7 @@ describe('AuthButton', () => {
       render(<AuthButton />);
 
       const button = screen.getByTestId('auth-button-login');
-      expect(button).toHaveClass('auth-button', 'auth-button--login');
+      expect(button).toHaveClass('btn', 'btn-primary', 'btn-sm');
     });
 
     it('should apply correct CSS classes for logout button', () => {
@@ -437,7 +437,7 @@ describe('AuthButton', () => {
       render(<AuthButton />);
 
       const button = screen.getByTestId('auth-button-logout');
-      expect(button).toHaveClass('auth-button', 'auth-button--logout');
+      expect(button).toHaveClass('btn', 'btn-danger', 'btn-sm');
     });
 
     it('should apply correct CSS classes for user info', () => {
@@ -458,7 +458,7 @@ describe('AuthButton', () => {
       render(<AuthButton />);
 
       const userInfo = screen.getByTestId('auth-button-user-info');
-      expect(userInfo).toHaveClass('auth-button__user-info');
+      expect(userInfo).toHaveClass('fw-bold', 'text-dark');
     });
 
     it('should apply correct CSS classes for error display', () => {
@@ -471,7 +471,7 @@ describe('AuthButton', () => {
       render(<AuthButton />);
 
       const errorElement = screen.getByTestId('auth-button-error');
-      expect(errorElement).toHaveClass('auth-button__error');
+      expect(errorElement).toHaveClass('alert', 'alert-danger', 'py-1', 'px-2', 'mb-0', 'small');
     });
   });
 });

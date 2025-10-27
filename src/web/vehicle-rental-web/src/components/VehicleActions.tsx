@@ -9,7 +9,6 @@ import {
   isAuthenticated
 } from '../auth/roleUtils';
 import { VehicleService } from '../services/vehicleService';
-import styles from '../styles/VehicleActions.module.css';
 
 interface VehicleActionsProps {
   vehicle: VehicleSummaryDto;
@@ -100,29 +99,24 @@ export const VehicleActions: React.FC<VehicleActionsProps> = memo(({
   // Don't show any actions for anonymous users except viewing
   if (!isAuthenticated(user)) {
     return (
-      <div className={styles.anonymousMessage} role="status">
+      <div className="text-muted small" role="status">
         Sign in to rent vehicles
       </div>
     );
   }
 
   const isStatusChangeAvailable = selectedStatus !== currentStatus;
-  const updateButtonClass = isUpdatingStatus
-    ? styles.updateButtonLoading
-    : isStatusChangeAvailable
-      ? styles.updateButtonActive
-      : styles.updateButtonInactive;
 
   return (
-    <div className={styles.container}>
+    <div className="d-flex flex-column gap-2">
       {/* User Role Display */}
-      <div className={styles.roleDisplay} aria-label={`User role: ${userDisplayRole}`}>
-        Role: {userDisplayRole}
+      <div className="text-muted small text-center" aria-label={`User role: ${userDisplayRole}`}>
+        Role: <span className="badge bg-secondary">{userDisplayRole}</span>
       </div>
 
       {/* Error Message */}
       {error && (
-        <div className={styles.errorMessage} role="alert" aria-live="polite">
+        <div className="alert alert-danger small py-1 px-2 mb-1" role="alert" aria-live="polite">
           {error}
         </div>
       )}
@@ -132,12 +126,12 @@ export const VehicleActions: React.FC<VehicleActionsProps> = memo(({
         <button
           onClick={handleRentVehicle}
           disabled={isRenting}
-          className={`${styles.actionButton} ${styles.rentButton}`}
+          className="btn btn-success btn-sm"
           aria-label={`Rent vehicle ${vehicle.vehicleId}`}
         >
           {isRenting ? (
             <>
-              <span className={styles.spinner} aria-hidden="true"></span>
+              <span className="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
               Renting...
             </>
           ) : (
@@ -150,12 +144,12 @@ export const VehicleActions: React.FC<VehicleActionsProps> = memo(({
         <button
           onClick={handleReturnVehicle}
           disabled={isReturning}
-          className={`${styles.actionButton} ${styles.returnButton}`}
+          className="btn btn-info btn-sm"
           aria-label={`Return vehicle ${vehicle.vehicleId}`}
         >
           {isReturning ? (
             <>
-              <span className={styles.spinner} aria-hidden="true"></span>
+              <span className="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
               Returning...
             </>
           ) : (
@@ -166,8 +160,8 @@ export const VehicleActions: React.FC<VehicleActionsProps> = memo(({
 
       {/* Status Update Actions for Technicians */}
       {permissions.canUpdateVehicleStatus && availableStatusTransitions.length > 0 && (
-        <div className={styles.statusControls}>
-          <label htmlFor={`status-select-${vehicle.vehicleId}`} className="sr-only">
+        <div className="d-flex gap-1">
+          <label htmlFor={`status-select-${vehicle.vehicleId}`} className="visually-hidden">
             Update vehicle status
           </label>
           <select
@@ -175,7 +169,7 @@ export const VehicleActions: React.FC<VehicleActionsProps> = memo(({
             value={selectedStatus}
             onChange={handleStatusChange}
             disabled={isUpdatingStatus}
-            className={styles.statusSelect}
+            className="form-select form-select-sm flex-grow-1"
             aria-label={`Current status: ${currentStatus}. Select new status`}
           >
             <option value={currentStatus}>{currentStatus}</option>
@@ -189,7 +183,13 @@ export const VehicleActions: React.FC<VehicleActionsProps> = memo(({
           <button
             onClick={handleStatusUpdate}
             disabled={isUpdatingStatus || !isStatusChangeAvailable}
-            className={`${styles.updateButton} ${updateButtonClass}`}
+            className={`btn btn-sm ${
+              isUpdatingStatus
+                ? 'btn-secondary'
+                : isStatusChangeAvailable
+                  ? 'btn-warning'
+                  : 'btn-outline-secondary'
+            }`}
             aria-label={isStatusChangeAvailable ? `Update status to ${selectedStatus}` : 'No status change selected'}
             title={isStatusChangeAvailable ? `Update status to ${selectedStatus}` : 'Select a different status to update'}
           >
@@ -200,7 +200,7 @@ export const VehicleActions: React.FC<VehicleActionsProps> = memo(({
 
       {/* Status Information */}
       {isTechnician(user) && (
-        <div className={styles.technicianInfo} aria-label="Technician capabilities">
+        <div className="text-muted small text-center" aria-label="Technician capabilities">
           Can manage: Maintenance, Out-of-Service
         </div>
       )}

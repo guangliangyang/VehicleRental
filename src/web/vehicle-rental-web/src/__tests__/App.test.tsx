@@ -76,7 +76,7 @@ describe('App Integration', () => {
     await waitFor(() => {
       const authButton = screen.getByTestId('auth-button');
       expect(authButton).toBeInTheDocument();
-      expect(authButton).toHaveClass('auth-button-header');
+      expect(authButton).toHaveClass('btn', 'btn-outline-light');
     });
   });
 
@@ -111,7 +111,7 @@ describe('App Integration', () => {
 
     await waitFor(() => {
       const authButton = screen.getByTestId('auth-button');
-      expect(authButton).toHaveClass('auth-button-header');
+      expect(authButton).toHaveClass('btn', 'btn-outline-light');
     });
 
     // Check header layout structure

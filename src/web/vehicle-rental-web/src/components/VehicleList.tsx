@@ -1,7 +1,6 @@
 import React, { memo, useCallback } from 'react';
 import { VehicleSummaryDto, VehicleStatus } from '../types/vehicle';
 import { VehicleActions } from './VehicleActions';
-import styles from '../styles/VehicleList.module.css';
 
 interface VehicleListProps {
   vehicles: VehicleSummaryDto[];
@@ -13,15 +12,15 @@ interface VehicleListProps {
 const getStatusClassName = (status: string): string => {
   switch (status) {
     case VehicleStatus.Available:
-      return styles.statusAvailable;
+      return 'bg-success';
     case VehicleStatus.Rented:
-      return styles.statusRented;
+      return 'bg-warning';
     case VehicleStatus.Maintenance:
-      return styles.statusMaintenance;
+      return 'bg-info';
     case VehicleStatus.OutOfService:
-      return styles.statusOutOfService;
+      return 'bg-danger';
     default:
-      return styles.statusDefault;
+      return 'bg-secondary';
   }
 };
 
@@ -46,32 +45,28 @@ const VehicleItem = memo<{
   onRefresh?: () => void;
 }>(({ vehicle, onRefresh }) => {
   return (
-    <div className={styles.vehicleCard}>
-      <div className={styles.vehicleInfo}>
-        <div className={styles.vehicleId}>
-          Vehicle {vehicle.vehicleId}
-        </div>
-        <div className={styles.vehicleLocation}>
-          📍 {vehicle.latitude.toFixed(4)}, {vehicle.longitude.toFixed(4)}
-        </div>
-      </div>
+    <div className="card mb-3">
+      <div className="card-body">
+        <div className="d-flex justify-content-between align-items-start">
+          <div className="flex-grow-1">
+            <h6 className="card-title mb-1">
+              Vehicle {vehicle.vehicleId}
+            </h6>
+            <p className="card-text text-muted small mb-2">
+              📍 {vehicle.latitude.toFixed(4)}, {vehicle.longitude.toFixed(4)}
+            </p>
+            <span className={`badge ${getStatusClassName(vehicle.status)} me-1`}>
+              <span aria-hidden="true">{getStatusIcon(vehicle.status)}</span> {vehicle.status}
+            </span>
+          </div>
 
-      <div className={styles.vehicleActions}>
-        <div className={styles.statusContainer}>
-          <span className={styles.statusIcon} aria-hidden="true">
-            {getStatusIcon(vehicle.status)}
-          </span>
-          <span
-            className={`${styles.statusText} ${getStatusClassName(vehicle.status)}`}
-          >
-            {vehicle.status}
-          </span>
+          <div className="ms-3">
+            <VehicleActions
+              vehicle={vehicle}
+              onRefresh={onRefresh}
+            />
+          </div>
         </div>
-
-        <VehicleActions
-          vehicle={vehicle}
-          onRefresh={onRefresh}
-        />
       </div>
     </div>
   );
@@ -86,8 +81,8 @@ export const VehicleList: React.FC<VehicleListProps> = memo(({ vehicles, loading
 
   if (loading) {
     return (
-      <div className={styles.loadingContainer} role="status" aria-live="polite">
-        <div className={styles.loadingSpinner} aria-hidden="true"></div>
+      <div className="d-flex justify-content-center align-items-center py-5" role="status" aria-live="polite">
+        <div className="spinner-border text-primary me-3" aria-hidden="true"></div>
         <div>Loading vehicles...</div>
       </div>
     );
@@ -95,23 +90,23 @@ export const VehicleList: React.FC<VehicleListProps> = memo(({ vehicles, loading
 
   if (vehicles.length === 0) {
     return (
-      <div className={styles.emptyContainer} role="status">
-        <span className={styles.emptyIcon} aria-hidden="true">🚗</span>
-        <div className={styles.emptyTitle}>No vehicles found in your area</div>
-        <div className={styles.emptySubtitle}>
+      <div className="text-center py-5" role="status">
+        <div className="display-1 mb-3" aria-hidden="true">🚗</div>
+        <h4 className="text-muted">No vehicles found in your area</h4>
+        <p className="text-muted">
           Try increasing the search radius or checking your location
-        </div>
+        </p>
       </div>
     );
   }
 
   return (
-    <section className={styles.container} aria-labelledby="vehicle-list-title">
-      <h3 id="vehicle-list-title" className={styles.title}>
+    <section aria-labelledby="vehicle-list-title">
+      <h3 id="vehicle-list-title" className="h4 mb-4">
         Nearby Vehicles ({vehicles.length})
       </h3>
 
-      <div className={styles.vehicleGrid} role="list" aria-label={`${vehicles.length} vehicles found`}>
+      <div role="list" aria-label={`${vehicles.length} vehicles found`}>
         {vehicles.map((vehicle) => (
           <div key={vehicle.vehicleId} role="listitem">
             <VehicleItem

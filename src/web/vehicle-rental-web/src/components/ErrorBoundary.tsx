@@ -1,5 +1,4 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import styles from '../styles/ErrorBoundary.module.css';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -55,23 +54,23 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
       // Default error UI
       return (
-        <div className={styles.errorContainer} role="alert">
-          <span className={styles.errorIcon} aria-hidden="true">
+        <div className="alert alert-danger text-center m-4" role="alert">
+          <div className="display-3 mb-3" aria-hidden="true">
             😞
-          </span>
+          </div>
 
-          <h2 className={styles.errorTitle}>
+          <h2 className="h4 mb-3">
             Oops! Something went wrong
           </h2>
 
-          <p className={styles.errorMessage}>
+          <p className="mb-4">
             We encountered an unexpected error. Please try refreshing the page or contact support if the problem persists.
           </p>
 
-          <div className={styles.buttonContainer}>
+          <div className="d-flex gap-2 justify-content-center mb-4">
             <button
               onClick={this.handleRetry}
-              className={styles.retryButton}
+              className="btn btn-primary"
               aria-label="Try to recover from error"
             >
               Try Again
@@ -79,7 +78,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
             <button
               onClick={() => window.location.reload()}
-              className={styles.refreshButton}
+              className="btn btn-outline-secondary"
               aria-label="Reload the page"
             >
               Refresh Page
@@ -88,27 +87,27 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
           {/* Show error details in development */}
           {process.env.NODE_ENV === 'development' && this.state.error && (
-            <details className={styles.errorDetails}>
-              <summary className={styles.errorDetailsSummary}>
+            <details className="mt-3 text-start">
+              <summary className="fw-bold mb-2 text-muted">
                 Error Details (Development)
               </summary>
 
-              <div className={styles.errorDetailsSection}>
-                <div className={styles.errorDetailsLabel}>Error:</div>
-                {this.state.error.message}
+              <div className="mb-3">
+                <strong className="text-muted">Error:</strong>
+                <div className="ms-2">{this.state.error.message}</div>
               </div>
 
-              <div className={styles.errorDetailsSection}>
-                <div className={styles.errorDetailsLabel}>Stack Trace:</div>
-                <pre className={styles.errorDetailsCode}>
+              <div className="mb-3">
+                <strong className="text-muted">Stack Trace:</strong>
+                <pre className="bg-light p-2 rounded small text-dark mt-1" style={{fontSize: '0.75rem', maxHeight: '200px', overflow: 'auto'}}>
                   {this.state.error.stack}
                 </pre>
               </div>
 
               {this.state.errorInfo && (
-                <div className={styles.errorDetailsSection}>
-                  <div className={styles.errorDetailsLabel}>Component Stack:</div>
-                  <pre className={styles.errorDetailsCode}>
+                <div className="mb-3">
+                  <strong className="text-muted">Component Stack:</strong>
+                  <pre className="bg-light p-2 rounded small text-dark mt-1" style={{fontSize: '0.75rem', maxHeight: '200px', overflow: 'auto'}}>
                     {this.state.errorInfo.componentStack}
                   </pre>
                 </div>
@@ -130,18 +129,18 @@ interface ErrorFallbackProps {
 }
 
 export const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetError }) => (
-  <div role="alert" className={styles.fallbackContainer}>
-    <h2 className={styles.fallbackTitle}>
+  <div role="alert" className="alert alert-danger text-center m-4">
+    <h2 className="h5 mb-3">
       Something went wrong
     </h2>
 
-    <p className={styles.fallbackMessage}>
+    <p className="mb-3">
       {error.message}
     </p>
 
     <button
       onClick={resetError}
-      className={styles.fallbackButton}
+      className="btn btn-primary"
       aria-label="Try to recover from error"
     >
       Try again

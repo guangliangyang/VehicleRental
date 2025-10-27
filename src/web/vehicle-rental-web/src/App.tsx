@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import './App.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import { MapView } from './components/MapView';
 import { VehicleList } from './components/VehicleList';
 import { UserVehiclesView } from './components/UserVehiclesView';
@@ -10,7 +10,6 @@ import { useVehicles } from './hooks/useVehicles';
 import { useAuthenticatedApi } from './hooks/useAuthenticatedApi';
 import { AuthProvider, AuthButton, useAuth } from './auth';
 import { getUserPermissions, isAuthenticated } from './auth/roleUtils';
-import styles from './styles/App.module.css';
 
 type ViewMode = 'map' | 'list' | 'myVehicles';
 
@@ -57,16 +56,16 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="App">
-      <div className={styles.app}>
-        <header className={styles.header}>
-          <div className={styles.headerContent}>
-            <div className={styles.headerLeft}>
-              <h1 className={styles.headerTitle}>🚗 Vehicle Rental System</h1>
-              <p className={styles.headerSubtitle}>Find available vehicles near you</p>
+      <div className="container-fluid p-4">
+        <header className="bg-primary text-white p-3 rounded mb-4">
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              <h1 className="h3 mb-1">🚗 Vehicle Rental System</h1>
+              <p className="mb-0 text-light">Find available vehicles near you</p>
             </div>
-            <div className={styles.headerRight}>
+            <div>
               <AuthButton
-                className="auth-button-header"
+                className="btn btn-outline-light"
               />
             </div>
           </div>
@@ -74,14 +73,14 @@ const AppContent: React.FC = () => {
 
         {/* Location Error */}
         {locationError && (
-          <div className={styles.errorMessage} role="alert" aria-live="polite">
+          <div className="alert alert-warning" role="alert" aria-live="polite">
             ⚠️ Location Error: {locationError}
           </div>
         )}
 
         {/* Vehicles Error */}
         {vehiclesError && (
-          <div className={styles.errorMessage} role="alert" aria-live="polite">
+          <div className="alert alert-danger" role="alert" aria-live="polite">
             ⚠️ Vehicles Error: {vehiclesError}
           </div>
         )}
@@ -100,11 +99,11 @@ const AppContent: React.FC = () => {
         />
 
         {/* View Toggle */}
-        <div className={styles.viewToggle} role="tablist" aria-label="View modes">
+        <div className="btn-group mb-4 w-100" role="tablist" aria-label="View modes">
           <button
             onClick={() => handleViewModeChange('map')}
-            className={`${styles.viewButton} ${
-              viewMode === 'map' ? styles.viewButtonActive : styles.viewButtonInactive
+            className={`btn ${
+              viewMode === 'map' ? 'btn-primary' : 'btn-outline-primary'
             }`}
             role="tab"
             aria-selected={viewMode === 'map'}
@@ -114,8 +113,8 @@ const AppContent: React.FC = () => {
           </button>
           <button
             onClick={() => handleViewModeChange('list')}
-            className={`${styles.viewButton} ${
-              viewMode === 'list' ? styles.viewButtonActive : styles.viewButtonInactive
+            className={`btn ${
+              viewMode === 'list' ? 'btn-primary' : 'btn-outline-primary'
             }`}
             role="tab"
             aria-selected={viewMode === 'list'}
@@ -126,8 +125,8 @@ const AppContent: React.FC = () => {
           {permissions.canViewOwnVehicles && (
             <button
               onClick={() => handleViewModeChange('myVehicles')}
-              className={`${styles.viewButton} ${
-                viewMode === 'myVehicles' ? styles.viewButtonPrimary : styles.viewButtonInactive
+              className={`btn ${
+                viewMode === 'myVehicles' ? 'btn-success' : 'btn-outline-success'
               }`}
               role="tab"
               aria-selected={viewMode === 'myVehicles'}
@@ -161,14 +160,14 @@ const AppContent: React.FC = () => {
 
         {/* Status Info */}
         {viewMode !== 'myVehicles' && (
-          <div className={styles.statusInfo} role="status" aria-live="polite">
+          <div className="alert alert-info mt-3" role="status" aria-live="polite">
             {location ? (
               <span>
                 📍 Location: {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)} |
                 🚗 Found {filteredVehicles.length} vehicles within {radius} km
                 {isAutoRefreshEnabled && (
-                  <span className={styles.autoRefreshIndicator}>
-                    | 🔄 Auto-refresh enabled (30s)
+                  <span className="badge bg-success ms-2">
+                    🔄 Auto-refresh enabled (30s)
                   </span>
                 )}
               </span>
@@ -180,11 +179,11 @@ const AppContent: React.FC = () => {
 
         {/* User Info */}
         {isAuthenticated(user) && (
-          <div className={styles.userInfo} role="banner">
-            👤 Signed in as {user?.name} | Access Level: {permissions.canUpdateVehicleStatus ? 'Technician' : 'User'}
+          <div className="alert alert-secondary mt-3" role="banner">
+            👤 Signed in as <strong>{user?.name}</strong> | Access Level: <span className="badge bg-primary">{permissions.canUpdateVehicleStatus ? 'Technician' : 'User'}</span>
             {permissions.canUpdateVehicleStatus && (
-              <span className={styles.technicianIndicator}>
-                | 🔧 Can manage maintenance & service status
+              <span className="badge bg-warning text-dark ms-2">
+                🔧 Can manage maintenance & service status
               </span>
             )}
           </div>
