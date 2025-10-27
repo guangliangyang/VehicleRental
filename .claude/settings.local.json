@@ -19,7 +19,8 @@
       "Bash(dotnet run:*)",
       "Bash(find:*)",
       "Bash(tree:*)",
-      "WebSearch"
+      "WebSearch",
+      "Read(//Users/andy/workspace/00-VechileRentalSystem-Claude/**)"
     ],
     "deny": [],
     "ask": []
