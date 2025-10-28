@@ -20,7 +20,9 @@
       "Bash(find:*)",
       "Bash(tree:*)",
       "WebSearch",
-      "Read(//Users/andy/workspace/00-VechileRentalSystem-Claude/**)"
+      "Read(//Users/andy/workspace/00-VechileRentalSystem-Claude/**)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
