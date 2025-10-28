@@ -144,7 +144,7 @@ export const useVehicles = (
         setLoading(false);
       }
     }
-  }, [userLocation, radius, cacheKey, loading]);
+  }, [userLocation, radius, cacheKey]);
 
   // Memoized refresh function
   const refresh = useCallback(() => {
