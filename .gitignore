@@ -93,7 +93,6 @@ yarn-error.log*
 .npm
 .eslintcache
 .yarn-integrity
-package-lock.json
 
 # React build output
 build/
