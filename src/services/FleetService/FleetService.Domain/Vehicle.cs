@@ -53,4 +53,28 @@ public sealed class Vehicle : Entity<string>, IAggregateRoot
         _location = location;
         RaiseDomainEvent(new VehicleLocationUpdatedDomainEvent(Id, location.Latitude, location.Longitude));
     }
+
+    public Result<Unit> Rent()
+    {
+        if (_status != VehicleStatus.Available)
+        {
+            return Result<Unit>.Failure(new Error("Vehicle.CannotRent", $"Vehicle cannot be rented in current status: {_status}"));
+        }
+
+        _status = VehicleStatus.Rented;
+        RaiseDomainEvent(new VehicleStatusChangedDomainEvent(Id, VehicleStatus.Rented));
+        return Result<Unit>.Success(Unit.Value);
+    }
+
+    public Result<Unit> Return()
+    {
+        if (_status != VehicleStatus.Rented)
+        {
+            return Result<Unit>.Failure(new Error("Vehicle.CannotReturn", $"Vehicle cannot be returned in current status: {_status}"));
+        }
+
+        _status = VehicleStatus.Available;
+        RaiseDomainEvent(new VehicleStatusChangedDomainEvent(Id, VehicleStatus.Available));
+        return Result<Unit>.Success(Unit.Value);
+    }
 }

@@ -29,6 +29,16 @@ public sealed class InMemoryVehicleRepository : IVehicleRepository
         return Task.FromResult<IReadOnlyList<Vehicle>>(vehicles);
     }
 
+    public Task<IReadOnlyList<Vehicle>> GetByUserIdAsync(string userId, CancellationToken cancellationToken)
+    {
+        // For in-memory implementation, return all rented vehicles since we don't track user associations
+        var vehicles = _vehicles.Values
+            .Where(v => v.Status == VehicleStatus.Rented)
+            .ToList();
+
+        return Task.FromResult<IReadOnlyList<Vehicle>>(vehicles);
+    }
+
     public async Task SaveAsync(Vehicle vehicle, CancellationToken cancellationToken)
     {
         if (vehicle == null) throw new ArgumentNullException(nameof(vehicle));

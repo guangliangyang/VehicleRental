@@ -22,11 +22,27 @@ dotnet run --project src/services/VehicleSimulator
 # Run all tests
 dotnet test src/services/VehicleRentalSystem.sln
 
-# Run specific test project
-dotnet test src/services/FleetService/FleetService.UnitTests
+# Run specific test project (CORRECT LOCATION)
+dotnet test tests/unit/FleetService.UnitTests
 
 # Run tests with coverage
 dotnet test --collect:"XPlat Code Coverage"
+```
+
+### Test Project Structure (IMPORTANT)
+Tests should ONLY be located in `/tests/` directory, NOT in `/src/`:
+```
+/tests/
+├── unit/
+│   ├── FleetService.UnitTests/           ✅ CORRECT
+│   └── VehicleRentalSystem.SharedKernel.Tests/
+└── integration/
+    └── FleetService.IntegrationTests/
+
+/src/services/FleetService/
+├── FleetService.Api/                     ✅ Source code only
+├── FleetService.Domain/
+└── FleetService.UnitTests/              ❌ WRONG LOCATION - DO NOT CREATE
 ```
 
 ## Architecture Overview
@@ -37,7 +53,7 @@ This is a **Vehicle Rental System** built with **.NET 8** following **Clean Arch
 - **VehicleRentalSystem.SharedKernel** - Common domain primitives, base classes, and the Result pattern
 - **FleetService.Domain** - Core business logic, entities (Vehicle), value objects (Location), and domain events
 - **FleetService.Application** - Application services, query handlers, and DTOs
-- **FleetService.Infrastructure** - Data persistence (Cosmos DB), SignalR, and external integrations
+- **FleetService.Infrastructure** - Data persistence (Cosmos DB) and external integrations
 - **FleetService.Api** - Web API with minimal APIs, Swagger documentation
 - **FleetService.UnitTests** - Unit tests using xUnit
 - **VehicleSimulator** - TBOX device simulator that sends GPS/status data to IoT Hub
@@ -64,13 +80,11 @@ All operations return `Result<T>` instead of throwing exceptions for business lo
 ### Required Azure Services Configuration
 All Azure services must be configured in `appsettings.json`:
 - **Cosmos DB**: Set `Cosmos:Endpoint` and `Cosmos:Key` for vehicle data persistence (required)
-- **SignalR**: Set `SignalR:ConnectionString` for real-time updates (required)
 - **Event Hubs + Stream Analytics**: Configure for telemetry processing pipeline (Azure-managed)
 - **IoT Hub**: Set `IoTHub:ConnectionString` for device connectivity (required)
 
 ### Key Endpoints
 - `GET /vehicles/nearby?latitude={lat}&longitude={lng}&radius={km}` - Find vehicles within radius (default 5km)
-- `/hubs/vehicles` - SignalR hub for real-time vehicle updates
 - `/swagger` - API documentation (Development environment only)
 
 ## Vehicle Data Flow Implementation
@@ -130,7 +144,6 @@ VehicleTelemetryMessage(
 - **ASP.NET Core** with minimal APIs
 - **xUnit** for testing with coverlet for code coverage
 - **Azure Cosmos DB** for geospatial data storage
-- **Azure SignalR Service** for real-time notifications
 - **Swashbuckle** for OpenAPI/Swagger documentation
 
 ## Development Notes

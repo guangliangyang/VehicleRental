@@ -70,6 +70,24 @@ public sealed class CosmosVehicleRepository : IVehicleRepository
         }
     }
 
+    public async Task<IReadOnlyList<Vehicle>> GetByUserIdAsync(string userId, CancellationToken cancellationToken)
+    {
+        // For now, return all rented vehicles since we don't track user associations yet
+        // This is a simplified implementation - in production you would track actual user-vehicle relationships
+        var sql = "SELECT * FROM c WHERE c.status = 'Rented'";
+        var queryDefinition = new QueryDefinition(sql);
+
+        var iterator = Container.GetItemQueryIterator<VehicleDocument>(queryDefinition);
+        var vehicles = new List<Vehicle>();
+        while (iterator.HasMoreResults)
+        {
+            var response = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
+            vehicles.AddRange(response.Select(doc => doc.ToAggregate()));
+        }
+
+        return vehicles;
+    }
+
     public async Task SaveAsync(Vehicle vehicle, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(vehicle);

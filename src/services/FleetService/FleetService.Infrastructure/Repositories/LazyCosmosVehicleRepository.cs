@@ -60,6 +60,12 @@ public sealed class LazyCosmosVehicleRepository : IVehicleRepository
         return await repository.GetByIdAsync(vehicleId, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Vehicle>> GetByUserIdAsync(string userId, CancellationToken cancellationToken)
+    {
+        var repository = await _lazyRepository.Value;
+        return await repository.GetByUserIdAsync(userId, cancellationToken);
+    }
+
     public async Task SaveAsync(Vehicle vehicle, CancellationToken cancellationToken)
     {
         var repository = await _lazyRepository.Value;

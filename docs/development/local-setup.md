@@ -52,7 +52,6 @@ dotnet run --project src/services/VehicleSimulator
 | Fleet API | http://localhost:5000 | Main backend API |
 | Swagger UI | http://localhost:5000/swagger | API documentation |
 | React Frontend | http://localhost:3000 | Web application |
-| SignalR Hub | http://localhost:5000/hubs/vehicles | Real-time updates |
 
 ## Development Tools
 
@@ -85,9 +84,6 @@ COSMOS_KEY=your-cosmos-key
 COSMOS_DATABASE_ID=cosmosdb-vc2
 COSMOS_CONTAINER_ID=cosmosdb-vc2-container
 
-# SignalR Service Configuration
-SIGNALR_CONNECTION_STRING=your-signalr-connection-string
-SIGNALR_HUB_NAME=vehicles
 
 # Application Configuration
 ASPNETCORE_ENVIRONMENT=Development

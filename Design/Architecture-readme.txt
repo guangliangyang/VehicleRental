@@ -22,7 +22,7 @@ The data is immediately split into two specialized pipelines to address the trad
 #### 2.1. The Hot Path (Real-Time Status and Location)
 
 * **Goal:** Sub-second latency for current vehicle location and status display.
-* **Flow:** `Event Hubs` $\to$ `Stream Analytics` $\to$ `Cosmos DB` $\to$ `SignalR`
+* **Flow:** `Event Hubs` $\to$ `Stream Analytics` $\to$ `Cosmos DB` $\to$ `API Polling`
 
 | Component | Role and Function | Technical Details |
 | :--- | :--- | :--- |
@@ -47,7 +47,6 @@ This layer manages state changes, user interactions, and orchestrates commands.
 | :--- | :--- | :--- |
 | **Azure SQL Database** | The source of truth for all transactional business logic. | Manages immutable **business state** (User accounts, Order lifecycle, Rented/Available status). It enforces strong **ACID properties** for critical business transactions. |
 | **Azure Kubernetes Service (AKS) / App Service** | The main Backend API and control service. | Hosts the business logic. It performs **user authorization**. It sends **C2D commands** via the **IoT Hub SDK**. It is also responsible for injecting **Status Events** (when a car is Rented/Returned, based on SQL updates) back into the **Event Hubs** stream, ensuring the Hot Path receives business status updates immediately. |
-| **Azure SignalR Service** | The low-latency, push notification service for the frontend. | Maintains persistent **WebSocket connections** with mobile/web clients. It receives location updates (and status changes) and **pushes** them out to users, ensuring instant, smooth updates to vehicle icons on the map. |
 | **Azure Maps** | The client-side (frontend) visualization service. | Used by the user app to render the geographic data, display the real-time icons from the Hot Path, and draw the historical tracks retrieved from the Cold Path query. |
 
 
@@ -90,4 +89,4 @@ The system transitions from a request-response flow to a streaming data flow to 
 | Data Flow Block | Description and Purpose | Architecture Context |
 | :--- | :--- | :--- |
 | **Vehicle Data Flow** | This block represents the telemetry (D2C) path. The `Unlocked Success` message enters this flow, ensuring the status update is reliably recorded alongside other telemetry data. | The message passes through the **Event Hubs** buffer, confirming delivery, and may update the **SQL Database** state. |
-| **Live Updates Data Flow** | This block represents the real-time feedback path. The updated status ('Unlocked') is pushed immediately to the user without polling. | This leverages **Azure SignalR Service**, which pushes the new vehicle status (read from the **Cosmos DB** Hot Path) back to the originating **User App** to instantly update the UI (e.g., changing the button state). |
+| **Live Updates Data Flow** | This block represents the real-time feedback path. The updated status ('Unlocked') is retrieved through periodic polling. | This leverages periodic API calls, which retrieve the new vehicle status from the **Cosmos DB** Hot Path to update the **User App** UI (e.g., changing the button state). |
