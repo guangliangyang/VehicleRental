@@ -41,16 +41,10 @@ best practice for using AI assistants in programming.
 8. The developer confirms and pushes the branch to git
 
 9.  code specification
-    1. Clean Architecture Understanding: Can you follow the established patterns?                                                                             │ │
-│ │ 2. Domain-Driven Design: Can you properly extend the domain model?                                                                                        │ │
+    1. Clean Architecture                                                                              │ │
+│ │ 2. Domain-Driven Design                                                                                       │ │
 │ │ 3. Result Pattern Usage: Proper error handling without exceptions                                                                                         │ │
 │ │ 4. SOLID Principles: Following dependency inversion and single responsibility                                                                             │ │
 │ │ 5. Testing Strategy: Writing appropriate unit tests for new functionality
 
-
-- Review Clean Architecture patterns in the existing codebase                                                                                          │
-     │ - Understand the Result pattern for error handling                                                                                                     │
-     │ - Practice Domain-Driven Design concepts like aggregates and value objects                                                                             │
-     │ - Study the existing repository patterns and dependency injection setup                                                                                │
-     │ - Be familiar with async/await patterns and cancellation tokens                                                                                        │
-     │ - Understand Entity Framework/Cosmos DB integration patterns  
+ 
