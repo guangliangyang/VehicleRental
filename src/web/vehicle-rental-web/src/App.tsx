@@ -154,6 +154,7 @@ const AppContent: React.FC = () => {
               userLocation={location}
               vehicles={filteredVehicles}
               radius={radius}
+              onRefresh={handleRefresh}
             />
           )}
         </main>

@@ -51,6 +51,7 @@ export const useVehicles = (
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const lastFetchRef = useRef<{ location: UserLocation | null; radius: number } | null>(null);
+  const loadingRef = useRef<boolean>(false);
 
   // Memoize cache key to prevent unnecessary recalculations
   const cacheKey = useMemo(() => {
@@ -79,7 +80,7 @@ export const useVehicles = (
       lastFetchRef.current.radius === radius &&
       !forceRefresh;
 
-    if (isDuplicateRequest && loading) {
+    if (isDuplicateRequest && loadingRef.current) {
       return; // Skip duplicate request
     }
 
@@ -107,6 +108,7 @@ export const useVehicles = (
     // Update last fetch reference
     lastFetchRef.current = { location: userLocation, radius };
 
+    loadingRef.current = true;
     setLoading(true);
     setError(null);
 
@@ -135,12 +137,14 @@ export const useVehicles = (
       cacheTimestamps.delete(cacheKey);
 
       if (!abortController.signal.aborted) {
+        loadingRef.current = false;
         const errorMessage = err instanceof Error ? err.message : 'Failed to fetch vehicles';
         setError(errorMessage);
         console.error('Failed to fetch vehicles:', err);
       }
     } finally {
       if (!abortController.signal.aborted) {
+        loadingRef.current = false;
         setLoading(false);
       }
     }

@@ -1,11 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { VehicleSummaryDto, VehicleStatus, VehicleConcurrencyError } from '../types/vehicle';
+import { useAuth } from '../auth';
+import {
+  getUserPermissions,
+  getAvailableStatusTransitions,
+  getDisplayRole,
+  isAuthenticated
+} from '../auth/roleUtils';
+import { VehicleService } from '../services/vehicleService';
 
 interface VehicleMarkerProps {
   vehicle: VehicleSummaryDto;
   onStatusUpdate?: (vehicleId: string, expectedCurrentStatus: VehicleStatus, newStatus: VehicleStatus) => Promise<void>;
+  onRefresh?: () => void;
 }
 
 // Create custom icons for different vehicle statuses
@@ -39,11 +48,15 @@ const getStatusIcon = (status: string): string => {
   }
 };
 
-export const VehicleMarker: React.FC<VehicleMarkerProps> = ({ vehicle, onStatusUpdate }) => {
+export const VehicleMarker: React.FC<VehicleMarkerProps> = ({ vehicle, onStatusUpdate, onRefresh }) => {
+  const { user } = useAuth();
+  const permissions = getUserPermissions(user);
   const [selectedStatus, setSelectedStatus] = useState<VehicleStatus>(vehicle.status as VehicleStatus);
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateMessage, setUpdateMessage] = useState<{ type: 'success' | 'error' | 'conflict'; text: string } | null>(null);
   const [currentVehicleStatus, setCurrentVehicleStatus] = useState<VehicleStatus>(vehicle.status as VehicleStatus);
+  const [isRenting, setIsRenting] = useState(false);
+  const [isReturning, setIsReturning] = useState(false);
 
   // Update local status when vehicle prop changes (from parent/server)
   useEffect(() => {
@@ -52,18 +65,62 @@ export const VehicleMarker: React.FC<VehicleMarkerProps> = ({ vehicle, onStatusU
   }, [vehicle.status]);
 
   const color = getStatusColor(vehicle.status);
-  const statusOptions = Object.values(VehicleStatus);
+  const availableStatusTransitions = getAvailableStatusTransitions(user, currentVehicleStatus);
+  const userDisplayRole = getDisplayRole(user);
 
-  const handleStatusUpdate = async () => {
-    if (!onStatusUpdate || selectedStatus === currentVehicleStatus) return;
+  const handleRentVehicle = useCallback(async () => {
+    if (!isAuthenticated(user) || currentVehicleStatus !== VehicleStatus.Available) return;
+
+    setIsRenting(true);
+    setUpdateMessage(null);
+
+    try {
+      await VehicleService.rentVehicle(vehicle.vehicleId);
+      setCurrentVehicleStatus(VehicleStatus.Rented);
+      setUpdateMessage({ type: 'success', text: 'Vehicle rented successfully!' });
+      onRefresh?.();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to rent vehicle';
+      setUpdateMessage({ type: 'error', text: errorMessage });
+      console.error('Failed to rent vehicle:', error);
+    } finally {
+      setIsRenting(false);
+      setTimeout(() => setUpdateMessage(null), 3000);
+    }
+  }, [user, currentVehicleStatus, vehicle.vehicleId, onRefresh]);
+
+  const handleReturnVehicle = useCallback(async () => {
+    if (!isAuthenticated(user) || currentVehicleStatus !== VehicleStatus.Rented) return;
+
+    setIsReturning(true);
+    setUpdateMessage(null);
+
+    try {
+      await VehicleService.returnVehicle(vehicle.vehicleId);
+      setCurrentVehicleStatus(VehicleStatus.Available);
+      setUpdateMessage({ type: 'success', text: 'Vehicle returned successfully!' });
+      onRefresh?.();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to return vehicle';
+      setUpdateMessage({ type: 'error', text: errorMessage });
+      console.error('Failed to return vehicle:', error);
+    } finally {
+      setIsReturning(false);
+      setTimeout(() => setUpdateMessage(null), 3000);
+    }
+  }, [user, currentVehicleStatus, vehicle.vehicleId, onRefresh]);
+
+  const handleStatusUpdate = useCallback(async () => {
+    if (selectedStatus === currentVehicleStatus) return;
 
     setIsUpdating(true);
     setUpdateMessage(null);
 
     try {
-      await onStatusUpdate(vehicle.vehicleId, currentVehicleStatus, selectedStatus);
+      await VehicleService.updateVehicleStatus(vehicle.vehicleId, currentVehicleStatus, selectedStatus);
       setCurrentVehicleStatus(selectedStatus);
       setUpdateMessage({ type: 'success', text: 'Status updated successfully!' });
+      onRefresh?.();
     } catch (error) {
       console.error('Failed to update vehicle status:', error);
 
@@ -76,7 +133,8 @@ export const VehicleMarker: React.FC<VehicleMarkerProps> = ({ vehicle, onStatusU
           text: `Status changed by another user. Expected: ${error.expectedCurrentStatus}, Current: ${error.actualCurrentStatus}. Please try again.`
         });
       } else {
-        setUpdateMessage({ type: 'error', text: 'Failed to update status. Please try again.' });
+        const errorMessage = error instanceof Error ? error.message : 'Failed to update status';
+        setUpdateMessage({ type: 'error', text: errorMessage });
         setSelectedStatus(currentVehicleStatus); // Reset to current status
       }
     } finally {
@@ -84,7 +142,7 @@ export const VehicleMarker: React.FC<VehicleMarkerProps> = ({ vehicle, onStatusU
       // Clear message after 5 seconds for conflicts, 3 seconds for others
       setTimeout(() => setUpdateMessage(null), updateMessage?.type === 'conflict' ? 5000 : 3000);
     }
-  };
+  }, [selectedStatus, currentVehicleStatus, vehicle.vehicleId, onRefresh, updateMessage?.type]);
 
   const customIcon = new L.DivIcon({
     className: 'custom-vehicle-marker',
@@ -116,114 +174,124 @@ export const VehicleMarker: React.FC<VehicleMarkerProps> = ({ vehicle, onStatusU
       icon={customIcon}
     >
       <Popup>
-        <div style={{ minWidth: '250px', padding: '8px' }}>
+        <div className="p-3" style={{ minWidth: '280px' }}>
           {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: '12px' }}>
-            <h4 style={{ margin: '0 0 4px 0', color: '#333' }}>
-              Vehicle {vehicle.vehicleId}
-            </h4>
-            <div style={{ fontSize: '12px', color: '#666' }}>
+          <div className="text-center mb-3">
+            <h5 className="mb-1">Vehicle {vehicle.vehicleId}</h5>
+            <small className="text-muted">
               📍 {vehicle.latitude.toFixed(6)}, {vehicle.longitude.toFixed(6)}
-            </div>
+            </small>
           </div>
 
+          {/* User Role Display */}
+          {isAuthenticated(user) && (
+            <div className="text-center mb-2">
+              <span className="badge bg-secondary">{userDisplayRole}</span>
+            </div>
+          )}
+
           {/* Current Status */}
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              padding: '8px',
-              backgroundColor: '#f8f9fa',
-              borderRadius: '4px',
-              border: `2px solid ${getStatusColor(currentVehicleStatus)}`
-            }}>
+          <div className="mb-3">
+            <div className={`d-flex align-items-center justify-content-center gap-2 p-2 rounded border-2`}
+                 style={{
+                   backgroundColor: '#f8f9fa',
+                   borderColor: getStatusColor(currentVehicleStatus)
+                 }}>
               <span style={{ fontSize: '18px' }}>
                 {getStatusIcon(currentVehicleStatus)}
               </span>
-              <span style={{
-                fontWeight: 'bold',
-                color: getStatusColor(currentVehicleStatus)
-              }}>
+              <span className="fw-bold" style={{ color: getStatusColor(currentVehicleStatus) }}>
                 {currentVehicleStatus}
               </span>
             </div>
           </div>
 
-          {/* Status Update Section */}
-          {onStatusUpdate && (
-            <div style={{ marginBottom: '12px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '6px',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                color: '#333'
-              }}>
-                Change Status:
-              </label>
+          {/* Actions Section */}
+          {isAuthenticated(user) ? (
+            <div className="d-flex flex-column gap-2 mb-3">
+              {/* Rent Vehicle Button */}
+              {permissions.canRentVehicles && currentVehicleStatus === VehicleStatus.Available && (
+                <button
+                  onClick={handleRentVehicle}
+                  disabled={isRenting}
+                  className="btn btn-success btn-sm"
+                >
+                  {isRenting ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-1"></span>
+                      Renting...
+                    </>
+                  ) : (
+                    <>🚗 Rent Vehicle</>
+                  )}
+                </button>
+              )}
 
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value as VehicleStatus)}
-                disabled={isUpdating}
-                style={{
-                  width: '100%',
-                  padding: '6px 8px',
-                  fontSize: '14px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  backgroundColor: 'white',
-                  marginBottom: '8px'
-                }}
-              >
-                {statusOptions.map((status) => (
-                  <option key={status} value={status}>
-                    {getStatusIcon(status)} {status}
-                  </option>
-                ))}
-              </select>
+              {/* Return Vehicle Button */}
+              {permissions.canReturnVehicles && currentVehicleStatus === VehicleStatus.Rented && (
+                <button
+                  onClick={handleReturnVehicle}
+                  disabled={isReturning}
+                  className="btn btn-info btn-sm"
+                >
+                  {isReturning ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-1"></span>
+                      Returning...
+                    </>
+                  ) : (
+                    <>🔄 Return Vehicle</>
+                  )}
+                </button>
+              )}
 
-              <button
-                onClick={handleStatusUpdate}
-                disabled={isUpdating || selectedStatus === currentVehicleStatus}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  color: 'white',
-                  backgroundColor: selectedStatus === currentVehicleStatus ? '#6c757d' : '#007bff',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: selectedStatus === currentVehicleStatus ? 'not-allowed' : (isUpdating ? 'wait' : 'pointer'),
-                  opacity: selectedStatus === currentVehicleStatus ? 0.6 : 1
-                }}
-              >
-                {isUpdating ? '🔄 Updating...' : selectedStatus === currentVehicleStatus ? 'No Change' : '✅ Update Status'}
-              </button>
+              {/* Status Update Section for Technicians */}
+              {permissions.canUpdateVehicleStatus && availableStatusTransitions.length > 0 && (
+                <div>
+                  <label className="form-label small fw-bold">Change Status:</label>
+                  <div className="d-flex gap-1">
+                    <select
+                      value={selectedStatus}
+                      onChange={(e) => setSelectedStatus(e.target.value as VehicleStatus)}
+                      disabled={isUpdating}
+                      className="form-select form-select-sm flex-grow-1"
+                    >
+                      <option value={currentVehicleStatus}>{currentVehicleStatus}</option>
+                      {availableStatusTransitions.map(status => (
+                        <option key={status} value={status}>
+                          {getStatusIcon(status)} {status}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={handleStatusUpdate}
+                      disabled={isUpdating || selectedStatus === currentVehicleStatus}
+                      className={`btn btn-sm ${
+                        isUpdating
+                          ? 'btn-secondary'
+                          : selectedStatus === currentVehicleStatus
+                            ? 'btn-outline-secondary'
+                            : 'btn-warning'
+                      }`}
+                    >
+                      {isUpdating ? '⏳' : '🔧'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center text-muted small">
+              Sign in to rent vehicles
             </div>
           )}
 
           {/* Status Message */}
           {updateMessage && (
-            <div style={{
-              padding: '6px 8px',
-              fontSize: '12px',
-              borderRadius: '4px',
-              textAlign: 'center',
-              backgroundColor:
-                updateMessage.type === 'success' ? '#d4edda' :
-                updateMessage.type === 'conflict' ? '#fff3cd' : '#f8d7da',
-              color:
-                updateMessage.type === 'success' ? '#155724' :
-                updateMessage.type === 'conflict' ? '#856404' : '#721c24',
-              border: `1px solid ${
-                updateMessage.type === 'success' ? '#c3e6cb' :
-                updateMessage.type === 'conflict' ? '#ffeaa7' : '#f5c6cb'
-              }`
-            }}>
+            <div className={`alert alert-sm p-2 text-center small ${
+              updateMessage.type === 'success' ? 'alert-success' :
+              updateMessage.type === 'conflict' ? 'alert-warning' : 'alert-danger'
+            }`}>
               {updateMessage.type === 'conflict' && '⚠️ '}{updateMessage.text}
             </div>
           )}

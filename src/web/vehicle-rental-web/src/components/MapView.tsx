@@ -10,6 +10,7 @@ interface MapViewProps {
   vehicles: VehicleSummaryDto[];
   radius: number;
   onStatusUpdate?: (vehicleId: string, expectedCurrentStatus: VehicleStatus, newStatus: VehicleStatus) => Promise<void>;
+  onRefresh?: () => void;
 }
 
 // Fix for default markers in react-leaflet
@@ -50,7 +51,7 @@ const userIcon = L.divIcon({
 });
 
 
-export const MapView: React.FC<MapViewProps> = ({ userLocation, vehicles, radius, onStatusUpdate }) => {
+export const MapView: React.FC<MapViewProps> = ({ userLocation, vehicles, radius, onStatusUpdate, onRefresh }) => {
   const mapRef = useRef<L.Map>(null);
 
   // Center map on user location when it changes
@@ -103,7 +104,12 @@ export const MapView: React.FC<MapViewProps> = ({ userLocation, vehicles, radius
 
         {/* Vehicle markers */}
         {vehicles.map((vehicle) => (
-          <VehicleMarker key={vehicle.vehicleId} vehicle={vehicle} onStatusUpdate={onStatusUpdate} />
+          <VehicleMarker
+            key={vehicle.vehicleId}
+            vehicle={vehicle}
+            onStatusUpdate={onStatusUpdate}
+            onRefresh={onRefresh}
+          />
         ))}
       </MapContainer>
 
