@@ -99,7 +99,7 @@ const retryRequest = async <T>(
   context: string,
   config: RetryConfig = DEFAULT_RETRY_CONFIG
 ): Promise<T> => {
-  let lastError: ServiceError;
+  let lastError: ServiceError | undefined;
 
   for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
     try {
@@ -118,7 +118,8 @@ const retryRequest = async <T>(
     }
   }
 
-  throw lastError!;
+  // This should never be reached, but provide a fallback error
+  throw lastError || new Error(`${context}: Maximum retry attempts exceeded`);
 };
 
 // Status mapping utilities
