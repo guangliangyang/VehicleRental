@@ -29,8 +29,15 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: src/web/vehicle-rental-web/package-lock.json
+
+    # Cache npm dependencies
+    - name: Cache npm dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('src/web/vehicle-rental-web/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
 
     # Build and test backend
     - name: Restore .NET dependencies
